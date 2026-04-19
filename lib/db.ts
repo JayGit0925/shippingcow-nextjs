@@ -6,6 +6,9 @@ export const sql =
   globalForDb.sql ??
   postgres(process.env.DATABASE_URL!, {
     ssl: 'require',
+    // Transaction poolers (Supabase port 6543) don't support prepared
+    // statements. Setting prepare:false works for both pooler and direct.
+    prepare: false,
     max: 10,
     idle_timeout: 20,
     max_lifetime: 60 * 30,
