@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     const { email, password, name, company } = parsed.data;
 
-    if (getUserByEmail(email)) {
+    if (await getUserByEmail(email)) {
       return NextResponse.json(
         { error: 'An account with this email already exists. Try logging in instead.' },
         { status: 409 }
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     }
 
     const password_hash = await hashPassword(password);
-    const user = createUser({ email, password_hash, name, company });
+    const user = await createUser({ email, password_hash, name, company });
     await setSessionCookie(user.id);
 
     return NextResponse.json({ user: publicUser(user) });

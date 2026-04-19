@@ -33,7 +33,7 @@ export default async function AdminPage() {
     redirect('/dashboard');
   }
 
-  const inquiries = getAllInquiries() as InquiryRow[];
+  const inquiries = (await getAllInquiries()) as unknown as InquiryRow[];
   const total = inquiries.length;
   const newCount = inquiries.filter((i) => i.status === 'new').length;
   const reviewedCount = inquiries.filter((i) => i.status === 'reviewed').length;

@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
   const { token, password } = parsed.data;
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  const record = getPasswordResetToken(tokenHash);
+  const record = await getPasswordResetToken(tokenHash);
 
   if (!record || record.used) {
     return NextResponse.json({ error: 'This reset link is invalid or has already been used.' }, { status: 400 });
@@ -34,14 +34,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'This reset link has expired. Please request a new one.' }, { status: 400 });
   }
 
-  const user = getUserById(record.user_id);
+  const user = await getUserById(record.user_id);
   if (!user) {
     return NextResponse.json({ error: 'Account not found.' }, { status: 400 });
   }
 
   const passwordHash = await hashPassword(password);
-  updateUserPassword(user.id, passwordHash);
-  markPasswordResetTokenUsed(record.id);
+  await updateUserPassword(user.id, passwordHash);
+  await markPasswordResetTokenUsed(record.id);
 
   return NextResponse.json({ ok: true });
 }

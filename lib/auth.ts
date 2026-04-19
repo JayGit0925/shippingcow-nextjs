@@ -57,7 +57,7 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!token) return null;
   const userId = await verifyToken(token);
   if (!userId) return null;
-  return getUserById(userId) ?? null;
+  return (await getUserById(userId)) ?? null;
 }
 
 /** Strip sensitive fields before sending a user to the client */

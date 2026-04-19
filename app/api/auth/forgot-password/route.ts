@@ -18,13 +18,13 @@ export async function POST(req: Request) {
   const { email } = parsed.data;
 
   // Always return success to prevent email enumeration
-  const user = getUserByEmail(email);
+  const user = await getUserByEmail(email);
   if (user) {
     const rawToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    createPasswordResetToken(user.id, tokenHash);
+    await createPasswordResetToken(user.id, tokenHash);
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
     await sendPasswordResetEmail(user.email, user.name, resetUrl);
   }

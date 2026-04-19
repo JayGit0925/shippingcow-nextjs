@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     const { email, password } = parsed.data;
-    const user = getUserByEmail(email);
+    const user = await getUserByEmail(email);
 
     // Constant-time message to avoid leaking which step failed
     const invalid = NextResponse.json(

@@ -21,7 +21,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const row = getTracking(number) as {
+  const row = await getTracking(number) as {
     tracking_number: string;
     status: string;
     origin: string;

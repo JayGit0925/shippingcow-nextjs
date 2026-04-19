@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     const user = await getCurrentUser();
     const data = { ...parsed.data, user_id: user?.id };
 
-    const id = createInquiry(data);
+    const id = await createInquiry(data);
 
     // Send emails in parallel. Failures don't block the response — the inquiry
     // is already saved in the DB, so the user won't lose their submission.

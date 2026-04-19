@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const inquiries = getInquiriesForUser(user.id) as InquiryRecord[];
+  const inquiries = (await getInquiriesForUser(user.id)) as unknown as InquiryRecord[];
 
   return (
     <div className="dash">
