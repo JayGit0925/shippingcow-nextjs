@@ -1,9 +1,9 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import type { Message } from '@/lib/types';
 
 const messageSchema = z.object({
-  role: z.enum(['user', 'assistant', 'system']),
+  role: z.enum(['user', 'assistant']),
   content: z.string().min(1).max(4000),
 });
 
@@ -35,45 +35,25 @@ export async function POST(req: Request) {
     );
   }
 
-  const litellmUrl = process.env.LITELLM_URL;
-  if (!litellmUrl) {
-    // Graceful fallback so the chat widget still works in dev without a key
+  if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({
       content:
-        "Hi! I'm the ShippingCow AI. Chat is not configured yet — set LITELLM_URL in .env.local to enable me. In the meantime, feel free to submit an inquiry and our team will reach out.",
+        "Hi! I'm the ShippingCow AI 🐄 Chat isn't configured yet — add ANTHROPIC_API_KEY to your environment to enable me. In the meantime, submit an inquiry and our team will reach out within one business day.",
     });
-  }
-
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (process.env.LITELLM_API_KEY) {
-    headers['Authorization'] = `Bearer ${process.env.LITELLM_API_KEY}`;
   }
 
   try {
-    const upstream = await fetch(`${litellmUrl}/chat/completions`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model: process.env.LITELLM_MODEL || 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...parsed.data.messages,
-        ] satisfies Message[],
-        max_tokens: 500,
-        temperature: 0.7,
-      }),
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 500,
+      system: SYSTEM_PROMPT,
+      messages: parsed.data.messages,
     });
 
-    if (!upstream.ok) {
-      const text = await upstream.text().catch(() => '');
-      console.error('[chat] LiteLLM error:', upstream.status, text);
-      throw new Error(`Upstream ${upstream.status}`);
-    }
-
-    const data = await upstream.json();
-    const content: string = data.choices?.[0]?.message?.content ?? '';
-
-    if (!content) throw new Error('Empty response from LiteLLM');
+    const content = response.content[0]?.type === 'text' ? response.content[0].text : '';
+    if (!content) throw new Error('Empty response');
 
     return NextResponse.json({ content });
   } catch (err) {
