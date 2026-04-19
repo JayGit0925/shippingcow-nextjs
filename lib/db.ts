@@ -49,6 +49,19 @@ export const db =
       )
     `);
 
+    // Password reset tokens
+    instance.exec(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token_hash TEXT UNIQUE NOT NULL,
+        expires_at TEXT NOT NULL,
+        used INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
     // Simple in-memory-style tracking (mock data for demo)
     instance.exec(`
       CREATE TABLE IF NOT EXISTS tracking (
@@ -153,4 +166,45 @@ export function getInquiriesForUser(userId: number) {
   return db
     .prepare('SELECT * FROM inquiries WHERE user_id = ? ORDER BY created_at DESC')
     .all(userId);
+}
+
+export function getAllInquiries() {
+  return db
+    .prepare(`
+      SELECT i.*, u.name as user_name
+      FROM inquiries i
+      LEFT JOIN users u ON i.user_id = u.id
+      ORDER BY i.created_at DESC
+    `)
+    .all();
+}
+
+export type PasswordResetToken = {
+  id: number;
+  user_id: number;
+  token_hash: string;
+  expires_at: string;
+  used: number;
+  created_at: string;
+};
+
+export function createPasswordResetToken(userId: number, tokenHash: string): void {
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+  db.prepare(
+    'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)'
+  ).run(userId, tokenHash, expiresAt);
+}
+
+export function getPasswordResetToken(tokenHash: string): PasswordResetToken | undefined {
+  return db
+    .prepare('SELECT * FROM password_reset_tokens WHERE token_hash = ?')
+    .get(tokenHash) as PasswordResetToken | undefined;
+}
+
+export function markPasswordResetTokenUsed(id: number): void {
+  db.prepare('UPDATE password_reset_tokens SET used = 1 WHERE id = ?').run(id);
+}
+
+export function updateUserPassword(userId: number, passwordHash: string): void {
+  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, userId);
 }

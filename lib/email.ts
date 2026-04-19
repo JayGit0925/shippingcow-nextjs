@@ -103,6 +103,50 @@ export async function sendInquiryConfirmation(data: InquiryEmailData): Promise<
   }
 }
 
+export async function sendPasswordResetEmail(
+  to: string,
+  name: string,
+  resetUrl: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const client = getClient();
+  if (!client) {
+    console.warn('[email] RESEND_API_KEY not configured — skipping password reset email.');
+    return { ok: false, error: 'Email not configured' };
+  }
+
+  try {
+    await client.emails.send({
+      from,
+      to,
+      subject: '🐄 Reset your Shipping Cow password',
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1A202C;">
+          <div style="background: #0052C9; color: #fff; padding: 24px; text-align: center; border: 4px solid #1A202C;">
+            <h1 style="margin: 0; font-size: 28px; letter-spacing: 0.02em;">SHIPPING COW</h1>
+            <p style="margin: 8px 0 0; color: #FEB81B;">Password reset request</p>
+          </div>
+          <div style="background: #fff; padding: 24px; border: 4px solid #1A202C; border-top: 0;">
+            <p>Hi ${escapeHtml(name)},</p>
+            <p>We received a request to reset your password. Click the button below to choose a new one. This link expires in <strong>1 hour</strong>.</p>
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${resetUrl}" style="background: #0052C9; color: #fff; padding: 14px 28px; text-decoration: none; font-weight: 700; border: 3px solid #1A202C; display: inline-block;">
+                Reset My Password
+              </a>
+            </div>
+            <p style="font-size: 13px; color: #666;">If you didn't request this, you can safely ignore this email — your password won't change.</p>
+            <p style="margin-top: 32px;">— The Shipping Cow Team 🐄</p>
+          </div>
+        </div>
+      `,
+    });
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[email] password reset send failed:', msg);
+    return { ok: false, error: msg };
+  }
+}
+
 function buildInquiryHtml(d: InquiryEmailData): string {
   const row = (label: string, value?: string) =>
     value

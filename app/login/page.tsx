@@ -72,6 +72,10 @@ export default function LoginPage() {
         </button>
 
         <div className="form-footer">
+          <Link href="/forgot-password">Forgot your password?</Link>
+        </div>
+
+        <div className="form-footer">
           New to Shipping Cow? <Link href="/signup">Create an account</Link>
         </div>
       </form>
