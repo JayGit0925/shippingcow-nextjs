@@ -6,7 +6,8 @@ out/
 .env.*.local
 *.log
 .DS_Store
-data/
+data/*.json
+data/*.db
 *.sqlite
 *.db
 .vercel
