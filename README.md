@@ -1,241 +1,189 @@
-# 🐄 Shipping Cow — Next.js Edition
+# ShippingCow — Next.js Fulfillment Routing SaaS
 
-A production-ready Next.js port of the Shipping Cow website with **real authentication**, **a working inquiry form that sends emails**, **package tracking**, and a **user dashboard**.
+ShippingCow helps e-commerce sellers reduce shipping costs by routing every order through the cheapest qualified carrier in real time. Built with Next.js 14 App Router, SQLite (dev) or Postgres (prod), Tailwind CSS, and LiteLLM for the AI chat widget.
 
 ---
 
-## ⚡ Quick Start
+## Quick start
+
+### 1. Prerequisites
+
+- **Node.js 18+** — [nodejs.org](https://nodejs.org)
+- **npm 9+** (comes with Node)
+
+### 2. Clone and install
 
 ```bash
-# 1. Install Node.js 18 or higher  →  https://nodejs.org
-# 2. Install dependencies
+git clone https://github.com/your-org/shippingcow-nextjs.git
+cd shippingcow-nextjs
 npm install
-
-# 3. Set up environment variables
-cp .env.example .env.local
-# then open .env.local in a text editor and fill in the values
-
-# 4. Run the dev server
-npm run dev
-
-# 5. Open your browser
-# http://localhost:3000
 ```
 
-That's it. The site runs locally with a SQLite database (auto-created in `./data/`).
+### 3. Environment variables
+
+```bash
+cp .env.local.example .env.local
+```
+
+Open `.env.local` and fill in the values. Minimum required for local dev:
+
+| Variable | What it does |
+|---|---|
+| `JWT_SECRET` | Signs auth cookies. Generate with `openssl rand -base64 48` |
+| `NEXT_PUBLIC_SITE_URL` | Used in password-reset email links. Set to `http://localhost:3000` locally |
+
+Everything else (email, LiteLLM, admin) is optional — features degrade gracefully when not configured.
+
+### 4. Run the dev server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). The SQLite database is created automatically at `./data/shippingcow.sqlite` on first run.
 
 ---
 
-## 📁 What's in the box
+## Pages
 
-### Pages
-| Route | What it does |
-|-------|-------------|
-| `/` | Full homepage — hero, pain points, guarantees, calculator, US map, pricing, services, about |
+| Route | Description |
+|---|---|
+| `/` | Homepage — hero, pricing, social proof, FAQ |
 | `/signup` | Create an account |
 | `/login` | Log in |
-| `/dashboard` | Logged-in user home — shows their inquiries & account info |
-| `/inquiry` | Contact form — sends email to you + confirmation to the user |
-| `/track` | Look up a package by tracking number |
-
-### API Routes (server-side)
-| Route | Purpose |
-|-------|---------|
-| `POST /api/auth/signup` | Create a user + sets auth cookie |
-| `POST /api/auth/login` | Verify credentials + sets auth cookie |
-| `POST /api/auth/logout` | Clears the auth cookie |
-| `GET /api/auth/me` | Returns current logged-in user (or null) |
-| `POST /api/inquiry` | Saves inquiry to DB + emails you + emails the user |
-| `GET /api/track?number=X` | Looks up tracking status |
+| `/dashboard` | User dashboard — inquiries and account info |
+| `/inquiry` | Lead capture / quote request form |
+| `/track` | Package tracker |
+| `/forgot-password` | Request a password reset link |
+| `/reset-password` | Set a new password via token |
+| `/admin` | Inquiry management (requires `ADMIN_EMAIL` to match logged-in user) |
 
 ---
 
-## 🔐 Setting up authentication
+## API routes
 
-You need a **JWT_SECRET** in your `.env.local`. This signs session cookies so nobody can forge logins.
-
-**Generate a strong secret:**
-
-```bash
-# Mac/Linux
-openssl rand -base64 48
-
-# Windows PowerShell
-[Convert]::ToBase64String((1..48 | % { Get-Random -Max 256 }))
-```
-
-Paste the result into `.env.local` as `JWT_SECRET=...`.
-
-That's the only mandatory auth setup. Passwords are hashed with bcrypt before they're stored.
+| Route | Method | Description |
+|---|---|---|
+| `/api/auth/signup` | POST | Create account + set session cookie |
+| `/api/auth/login` | POST | Verify credentials + set session cookie |
+| `/api/auth/logout` | POST | Clear session cookie |
+| `/api/auth/me` | GET | Return current user or null |
+| `/api/auth/forgot-password` | POST | Generate reset token + send email |
+| `/api/auth/reset-password` | POST | Validate token + update password |
+| `/api/inquiry` | POST | Save inquiry + send notification emails |
+| `/api/chat` | POST | Proxy chat messages through LiteLLM |
+| `/api/track` | GET | Look up tracking status by number |
+| `/api/tracking` | GET | Enhanced tracking endpoint (returns full event history) |
 
 ---
 
-## 📧 Setting up email (the inquiry form)
+## Components
 
-The inquiry page writes to the database AND tries to send two emails: one notifying you of the new lead, one confirming receipt to the visitor.
+| Component | Description |
+|---|---|
+| `Nav` | User-aware navigation with mobile hamburger |
+| `Footer` | Site footer with links |
+| `ChatWidget` | Floating AI chat bubble — connects to `/api/chat` |
+| `SocialProof` | Stats bar + testimonial cards |
+| `SellerCallout` | Platform-specific pain points section |
+| `PricingCard` | Individual pricing tier card (accepts `PricingTier` prop) |
+| `FAQ` | Accordion FAQ — accepts `FAQItem[]` prop |
+| `FinalCTA` | Closing conversion section with customizable copy |
+| `HeroTracker` | Inline tracking widget for the homepage hero |
+| `ShrinkageCalculator` | Interactive savings calculator |
+| `PricingToggle` | Monthly/annual pricing toggle |
+| `USMap` | Animated US coverage map |
 
-**To make the emails actually deliver:**
+---
 
-1. **Sign up free at [resend.com](https://resend.com)** — 100 emails/day on the free tier, no credit card required.
+## Setting up the AI chat widget
 
-2. **For local dev / testing:** Resend gives you a pre-verified sender `onboarding@resend.dev`. Use that and you can start sending today.
-
-3. **For production:** Add your domain at `https://resend.com/domains` and verify it with DNS records (takes ~5 min). Then use `hello@yourdomain.com` (or similar) as your From address.
-
-4. **Create an API key** at `https://resend.com/api-keys` — copy it.
-
-5. **Fill in `.env.local`:**
-
+1. Run a [LiteLLM proxy](https://docs.litellm.ai/docs/proxy/quick_start):
+   ```bash
+   pip install litellm
+   litellm --model gpt-4o-mini
+   # Proxy is now at http://localhost:4000
    ```
-   RESEND_API_KEY=re_your_actual_key_here
+2. Set in `.env.local`:
+   ```
+   LITELLM_URL=http://localhost:4000
+   LITELLM_MODEL=gpt-4o-mini
+   ```
+3. Restart `npm run dev`. The chat widget at the bottom right is now live.
+
+The chat widget falls back to a friendly "not configured" message if `LITELLM_URL` is unset, so it never breaks the UI.
+
+---
+
+## Setting up email (Resend)
+
+1. Sign up at [resend.com](https://resend.com) (free — 100 emails/day).
+2. Create an API key at `https://resend.com/api-keys`.
+3. Fill in `.env.local`:
+   ```
+   RESEND_API_KEY=re_your_key_here
    RESEND_FROM=Shipping Cow <onboarding@resend.dev>
    INQUIRY_TO_EMAIL=you@yourdomain.com
    ```
+4. Restart `npm run dev`.
 
-6. Restart the dev server (`Ctrl+C`, then `npm run dev` again) so it picks up the new env vars.
-
-**Test it:** Go to `/inquiry`, fill the form, submit. The email hits your inbox within seconds.
-
-> **If email isn't configured**, the inquiry still saves to the database — you just won't get an email about it. You can see all inquiries in the dashboard of the account that submitted them, or query the DB directly.
+Inquiry confirmation emails, new-lead notifications, and password reset emails all go through Resend. Each feature degrades gracefully (saves to DB, just no email) if the key is missing.
 
 ---
 
-## 📦 Package tracking
+## Demo tracking numbers
 
-Three demo tracking numbers are seeded automatically on first run:
+Three numbers are seeded automatically:
 
 - `SC123456789` — Out for delivery
 - `SC987654321` — In transit
 - `SC111222333` — Delivered
 
-Try them on `/track`. Other numbers return a friendly "not found" message.
-
-In production, you'd connect this to a real carrier API (FedEx, UPS, ShipStation, etc.) — the lookup happens in `app/api/track/route.ts`.
+Test them at `/track`.
 
 ---
 
-## 🚀 Deploying to production
+## Production deployment
 
-### Easiest: Vercel (free, one-click)
+### Vercel (recommended)
 
-1. Push this project to a GitHub repo.
-2. Go to [vercel.com](https://vercel.com), click "New Project", import your repo.
-3. In the project settings → Environment Variables, paste in everything from your `.env.local` (JWT_SECRET, RESEND_API_KEY, RESEND_FROM, INQUIRY_TO_EMAIL).
-4. Click Deploy. Live in ~90 seconds.
+1. Push to GitHub.
+2. Import at [vercel.com](https://vercel.com).
+3. Add all env vars from `.env.local` in the Vercel dashboard.
+4. Deploy.
 
-⚠️ **One catch with Vercel**: the SQLite file is stored on ephemeral disk, so data resets on every deploy. For production, swap to a hosted DB. Easiest options:
-- **Vercel Postgres** (free tier, integrated)
-- **Turso** (SQLite in the cloud — minimal code change since we're already using SQLite)
-- **Supabase** (Postgres + auth as-a-service)
+**Note:** Vercel's filesystem is ephemeral — swap `DATABASE_URL` to a hosted Postgres (Vercel Postgres, Supabase, or Neon) before going live.
 
-Tell me which one you want and I'll migrate `lib/db.ts` for you.
+### Railway / Render
 
-### Alternative: Railway / Render
-Both deploy Next.js apps easily and give you persistent disk for SQLite (so you can keep using it as-is). Sign up, connect your repo, add env vars, deploy.
-
-### Alternative: Your own VPS
-Standard Next.js deploy — `npm run build && npm run start` behind nginx/Caddy. Reach out if you go this route.
+Both support persistent disk for SQLite. Connect your repo, add env vars, deploy. No DB migration needed.
 
 ---
 
-## 🗂 Project structure
+## Before going public
 
-```
-shippingcow-nextjs/
-├── app/                      # Next.js App Router pages & API
-│   ├── api/                  # Server endpoints (auth, inquiry, track)
-│   ├── dashboard/page.tsx    # Logged-in user home
-│   ├── inquiry/page.tsx      # Contact form
-│   ├── login/page.tsx
-│   ├── signup/page.tsx
-│   ├── track/page.tsx
-│   ├── page.tsx              # Homepage
-│   ├── layout.tsx            # Root layout (nav + footer)
-│   └── globals.css           # Brand design system
-├── components/               # Reusable UI pieces
-│   ├── Nav.tsx               # User-aware navigation
-│   ├── Footer.tsx
-│   ├── HeroTracker.tsx       # Tracking widget on homepage
-│   ├── ShrinkageCalculator.tsx
-│   ├── PricingToggle.tsx
-│   └── USMap.tsx
-├── lib/                      # Server-side utilities
-│   ├── db.ts                 # SQLite setup + query helpers
-│   ├── auth.ts               # Password hashing + JWT sessions
-│   └── email.ts              # Resend email sending
-├── public/images/
-│   └── cow-logo.png          # Your mascot
-├── data/                     # (auto-created) SQLite DB lives here
-├── .env.example              # Template — copy to .env.local
-├── package.json
-└── README.md                 # This file
-```
+- [ ] Replace `JWT_SECRET` with a real random value
+- [ ] Configure Resend with your own domain (not `onboarding@resend.dev`)
+- [ ] Migrate to a hosted database
+- [ ] Add rate limiting to `/api/auth/login`, `/api/auth/signup`, `/api/inquiry`
+- [ ] Configure `LITELLM_URL` and a production LLM key
+- [ ] Point your domain at the deployment
 
 ---
 
-## 🛠 Common tasks
+## Tech stack
 
-### Add a new page
-Create `app/my-page/page.tsx`. It's live at `/my-page` instantly. Use existing components from `components/` to keep the brand consistent.
-
-### Add a new form field to the inquiry form
-1. Add the field to the `form` state in `app/inquiry/page.tsx`
-2. Add the column to the `inquiries` table in `lib/db.ts`
-3. Add it to the `schema` in `app/api/inquiry/route.ts`
-4. Add it to the email HTML in `lib/email.ts`
-
-### See all inquiries in the database
-Install a SQLite viewer (e.g., [DB Browser for SQLite](https://sqlitebrowser.org)) and open `./data/shippingcow.sqlite`.
-
-Or query from the terminal:
-
-```bash
-sqlite3 ./data/shippingcow.sqlite "SELECT * FROM inquiries ORDER BY created_at DESC LIMIT 10;"
-```
-
-### Change a color / style
-Everything brand-related lives in CSS variables at the top of `app/globals.css`. Edit once, applies everywhere.
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| Styling | Custom CSS design system + Tailwind CSS 3 |
+| Database | better-sqlite3 (dev) / Postgres (prod) |
+| Auth | JWT via `jose` + bcrypt |
+| Email | Resend |
+| AI chat | LiteLLM proxy (model-agnostic) |
+| Deploy | Vercel / Railway / Render |
 
 ---
-
-## ⚠️ Before going public
-
-- [ ] Change `JWT_SECRET` from any example value to a real random one
-- [ ] Set up your Resend domain (don't ship with `onboarding@resend.dev` in production)
-- [ ] Migrate from SQLite to a hosted DB (see deploy section)
-- [ ] Add rate limiting to `/api/auth/login` and `/api/inquiry` (e.g., Upstash Ratelimit)
-- [ ] Add `robots.txt` and real `canonical` URLs
-- [ ] Point your actual domain at the deployment
-
----
-
-## 🆘 Troubleshooting
-
-**`npm install` fails with native-module errors on better-sqlite3:**
-You need Node 18+. On Mac: `brew install node`. On Windows: install from nodejs.org.
-
-**I submit the inquiry form and no email arrives:**
-Check the terminal where `npm run dev` is running. Email errors are logged there (e.g., "RESEND_API_KEY not configured"). Fix the env var, restart the server.
-
-**I get `JWT_SECRET` warnings:**
-You're using the fallback dev secret. Create a real one (see Authentication section) and put it in `.env.local`.
-
-**Login works but dashboard redirects to /login:**
-Your cookie isn't being set. Usually means you're running on a different origin than your browser is requesting. Make sure you're at `http://localhost:3000` exactly.
-
----
-
-## 📮 Want to extend this?
-
-Claude (here or via Claude Code) can add features on top of this scaffold. Common next steps merchants ask for:
-
-- Admin dashboard to view all inquiries (across all users)
-- Stripe integration for the pricing tiers
-- Real shipping rate API (FedEx/UPS) replacing the mock tracking
-- Email newsletter signup with double-opt-in
-- Blog with MDX
-- Password reset flow
-
-Just describe what you want.
 
 — Moo's honor. 🐄

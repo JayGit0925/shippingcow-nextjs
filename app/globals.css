@@ -646,3 +646,11 @@ img, svg { max-width: 100%; display: block; }
   .hero { padding: 2.5rem 0 3.5rem; }
   .form-card { padding: 1.5rem; }
 }
+
+/* ============================================================
+   Tailwind CSS — components and utilities only.
+   preflight is disabled in tailwind.config.ts so these
+   directives don't reset the design system above.
+   ============================================================ */
+@tailwind components;
+@tailwind utilities;
