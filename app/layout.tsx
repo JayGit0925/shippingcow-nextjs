@@ -1,0 +1,40 @@
+import type { Metadata } from 'next';
+import './globals.css';
+import Nav from '@/components/Nav';
+import Footer from '@/components/Footer';
+
+export const metadata: Metadata = {
+  title: 'Shipping Cow — Heavy Goods 3PL & E-Commerce Fulfillment | Cut Shipping Costs 80%',
+  description:
+    'Shipping Cow AI is the #1 fulfillment platform for heavy goods sellers. Cut FedEx costs up to 80%, guarantee 2-day delivery, and automate your logistics paperwork with AI.',
+  keywords: [
+    'heavy goods 3PL',
+    'oversized shipping',
+    'ecommerce fulfillment',
+    'cut shipping costs',
+    'DIM weight optimizer',
+    'Amazon SFP fulfillment',
+    'TikTok Shop dispatch',
+    'furniture 3PL',
+    'fitness equipment shipping',
+    'freight logistics platform',
+  ],
+  openGraph: {
+    title: 'Shipping Cow — Moo-ve Heavy Goods Without Getting Milked',
+    description:
+      'Enterprise logistics rates for mid-market heavy goods sellers. Up to 80% off FedEx. 2-day guaranteed. AI-powered back office.',
+    type: 'website',
+  },
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <Nav />
+        {children}
+        <Footer />
+      </body>
+    </html>
+  );
+}
