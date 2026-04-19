@@ -3,6 +3,10 @@ import HeroTracker from '@/components/HeroTracker';
 import ShrinkageCalculator from '@/components/ShrinkageCalculator';
 import PricingToggle from '@/components/PricingToggle';
 import USMap from '@/components/USMap';
+import SocialProof from '@/components/SocialProof';
+import SellerCallout from '@/components/SellerCallout';
+import FAQ from '@/components/FAQ';
+import FinalCTA from '@/components/FinalCTA';
 
 export default function HomePage() {
   return (
@@ -76,6 +80,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ============ SOCIAL PROOF — stats + testimonials ============ */}
+      <SocialProof />
+
       {/* ============ STATS ============ */}
       <section className="stats">
         <div className="container">
@@ -87,6 +94,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ============ SELLER CALLOUT — platform grid ============ */}
+      <SellerCallout />
 
       {/* ============ PRICING ============ */}
       <section className="section section--alt" id="pricing">
@@ -123,9 +133,9 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Shrinkage Calculator */}
+          {/* Shrinkage + Shipping Rate Calculator */}
           <div style={{ marginTop: '4rem' }}>
-            <h2 style={{ textAlign: 'center' }}>Find Out What Shrinkage <span style={{ color: 'var(--blue)' }}>Is Really Costing</span> Your Herd</h2>
+            <h2 style={{ textAlign: 'center' }}>Find Out What Shrinkage &amp; Overpriced Shipping <span style={{ color: 'var(--blue)' }}>Is Really Costing</span> Your Herd</h2>
             <p style={{ textAlign: 'center', maxWidth: 680, margin: '1rem auto 0', color: '#3a4454', fontSize: '1.05rem' }}>
               The industry average for 3PL inventory shrinkage is 2–4%. Most providers treat it as "normal." Calculate what "normal" costs you — then see what zero looks like.
             </p>
@@ -170,6 +180,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ============ FAQ ============ */}
+      <FAQ />
+
       {/* ============ ABOUT ============ */}
       <section className="section" id="about">
         <div className="container">
@@ -189,6 +202,16 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ============ FINAL CTA ============ */}
+      <FinalCTA
+        headline="Ready to stop overpaying on heavy freight?"
+        subtext="Tell us your products, current carrier, and monthly volume. We'll build a custom savings model — no commitment, 24-hour turnaround."
+        primaryLabel="Get my free savings estimate →"
+        primaryHref="/inquiry"
+        secondaryLabel="See Big & Bulky rates"
+        secondaryHref="/big-and-bulky"
+      />
     </>
   );
 }
