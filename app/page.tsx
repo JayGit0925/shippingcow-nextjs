@@ -169,11 +169,16 @@ export default function HomePage() {
               { num: 'SVC 05', title: 'Last Mile & 2-Day Delivery', tag: '"The Amazon SFP Badge. The TikTok 48-Hour SLA."', body: 'Our Smart Routing Algorithm guarantees every destination ZIP in our coverage zone receives delivery in 2 business days. We handle SFP compliance, TikTok dispatch, and any SLA your storefront promises.' },
               { num: 'SVC 06', title: 'Returns & Reverse Logistics', tag: '"Returns Don\'t Have to Be a Total Loss Anymore"', body: 'Heavy goods return rates run 15–20%. Shipping Cow handles returns authorization, reverse routing, condition triage, and refurbishment — so returned goods go back to sellable status, not the landfill.' },
             ].map((s) => (
-              <article key={s.num} style={{ background: 'var(--white)', border: '3px solid var(--dark)', padding: '1.8rem', boxShadow: 'var(--shadow-pixel)' }}>
+              <article key={s.num} style={{ background: 'var(--white)', border: '3px solid var(--dark)', padding: '1.8rem', boxShadow: 'var(--shadow-pixel)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.75rem', color: 'var(--blue)', display: 'inline-block', padding: '0.2rem 0.5rem', border: '2px solid var(--blue)', marginBottom: '0.6rem' }}>{s.num}</div>
                 <h3 style={{ fontSize: '1.3rem', textTransform: 'uppercase', marginBottom: '0.4rem' }}>{s.title}</h3>
                 <div style={{ fontWeight: 700, fontStyle: 'italic', color: 'var(--blue)', marginBottom: '0.8rem', fontSize: '1rem' }}>{s.tag}</div>
-                <p style={{ fontSize: '0.95rem', color: '#3a4454' }}>{s.body}</p>
+                <p style={{ fontSize: '0.95rem', color: '#3a4454', flex: 1 }}>{s.body}</p>
+                <div style={{ marginTop: '1.2rem' }}>
+                  <Link href="/inquiry" className="btn btn--sm" style={{ background: 'var(--yellow)', color: 'var(--dark)', fontSize: '0.8rem' }}>
+                    Get a Quote →
+                  </Link>
+                </div>
               </article>
             ))}
           </div>
