@@ -172,3 +172,19 @@ Key rules:
 - NEVER mention competitor names (UPS, FedEx, ShipBob, etc.) directly
 - Keep responses under 150 words unless a detailed breakdown is truly needed
 - Be direct and helpful — no filler, no corporate fluff`
+
+// ============ Audit & Cost Model Constants ============
+
+export const HANDLING_FEE = 4.50   // Per package
+export const LAST_MILE_FEE = 2.80  // Per package
+
+// FedEx Ground approximate cost per pound by zone
+export const ZONE_RATES: Record<number, number> = {
+  2: 0.32,
+  3: 0.36,
+  4: 0.42,
+  5: 0.50,
+  6: 0.58,
+  7: 0.67,
+  8: 0.78,
+}

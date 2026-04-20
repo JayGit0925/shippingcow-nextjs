@@ -299,3 +299,52 @@ export async function getPasswordResetToken(tokenHash: string): Promise<Password
 export async function markPasswordResetTokenUsed(id: number): Promise<void> {
   await sql`UPDATE password_reset_tokens SET used = true WHERE id = ${id}`;
 }
+
+// ============ ZIP coordinate helpers ============
+
+export async function getZipCoords(zip: string): Promise<{lat: number, lng: number} | undefined> {
+  const rows = await sql<{lat: number, lng: number}[]>`
+    SELECT lat, lng FROM zip_coords WHERE zip = ${zip.padStart(5, '0')} LIMIT 1
+  `;
+  return rows[0];
+}
+
+// ============ Audit helpers ============
+
+export type AuditReport = {
+  id: string
+  created_at: string
+  lead_id?: string
+  input_data: Record<string, unknown>
+  report_data: Record<string, unknown>
+  row_count: number
+  total_savings: number
+}
+
+export async function saveAudit(params: {
+  input_data: Record<string, unknown>
+  report_data: Record<string, unknown>
+  row_count: number
+  total_savings: number
+  lead_id?: string
+}): Promise<string> {
+  const rows = await sql<{id: string}[]>`
+    INSERT INTO audits (input_data, report_data, row_count, total_savings, lead_id)
+    VALUES (
+      ${sql.json(asJson(params.input_data))},
+      ${sql.json(asJson(params.report_data))},
+      ${params.row_count},
+      ${params.total_savings},
+      ${params.lead_id ?? null}
+    )
+    RETURNING id
+  `;
+  return rows[0].id;
+}
+
+export async function getAudit(id: string): Promise<AuditReport | undefined> {
+  const rows = await sql<AuditReport[]>`
+    SELECT * FROM audits WHERE id = ${id} LIMIT 1
+  `;
+  return rows[0];
+}
