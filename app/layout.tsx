@@ -25,6 +25,14 @@ export const metadata: Metadata = {
     description:
       'Enterprise logistics rates for mid-market heavy goods sellers. Up to 80% off FedEx. 2-day guaranteed. AI-powered back office.',
     type: 'website',
+    url: 'https://shippingcow.io',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ShippingCow — Heavy Goods Fulfillment with DIM 225 Pricing',
+    description: 'DIM 225 pricing. 80% off FedEx rates. Zero shrinkage. 2-day delivery to 92% of the US.',
+    images: ['/opengraph-image'],
   },
 };
 

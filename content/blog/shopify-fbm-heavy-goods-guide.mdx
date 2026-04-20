@@ -1,0 +1,104 @@
+---
+title: "Shopify FBM for Heavy Goods: The Complete Setup Guide"
+date: "2026-03-05"
+category: "Shopify FBM Tips"
+excerpt: "Fulfilled by Merchant on Shopify gives you control over your heavy-goods shipping — but only if you've set it up correctly. This guide covers carrier selection, rate display, packaging, and how to stop bleeding margin on every order."
+readingTime: "6 min"
+author: "ShippingCow Team"
+---
+
+Fulfilled by Merchant (FBM) is the default shipping model for most Shopify stores. You receive an order, you pack it, you ship it. Simple in concept. More complicated when your products weigh 50–80 lbs.
+
+This guide covers the specific setup decisions that determine whether your Shopify FBM operation makes money on heavy-goods orders — or quietly loses margin on every shipment.
+
+## The Core Problem With Heavy-Goods FBM
+
+Standard Shopify shipping advice assumes relatively light, compact products. Set up carrier-calculated rates, add some packaging weight, connect your UPS or FedEx account, done.
+
+That advice breaks for heavy goods in two ways:
+
+**Problem 1: Carrier-calculated rates don't account for DIM weight at checkout.** Shopify's built-in carrier-calculated shipping pulls rates based on the package weight you enter. If your product weighs 65 lbs and you enter 65 lbs, that's what Shopify quotes. But when you actually ship the package, UPS or FedEx calculates DIM weight — which may be 85–100 lbs for a large box — and charges you for that instead. You've already collected the lower amount from your customer.
+
+**Problem 2: Zone variability is huge and unpredictable.** A 65-lb shipment to Zone 3 might cost $28. To Zone 8, it might cost $54. If you're charging a flat shipping rate (or even a rate based only on weight), you're subsidizing cross-country orders while overcharging nearby customers.
+
+## Step 1: Get Your DIM Weight Right in Shopify
+
+First, calculate the accurate billable weight for each product — not just actual weight.
+
+For each SKU, calculate:
+```
+DIM Weight = (Box L × Box W × Box H) / 139
+Billable Weight = MAX(actual weight, DIM weight)
+```
+
+Enter the **billable weight** as your product's shipping weight in Shopify, not the actual weight. This ensures carrier-calculated rates at checkout reflect what you'll actually pay to ship.
+
+If you're using ShippingCow, use divisor 225 instead of 139. Your billable weight will be lower, your rates will be lower, and your checkout quotes will be accurate.
+
+## Step 2: Carrier-Calculated Rates vs. Flat Rates
+
+**Carrier-calculated rates** (using Shopify Shipping or a carrier API app) show customers real-time rate quotes. For heavy goods, this is usually the right approach. Flat rates on 65-lb products leave too much money on the table on long-distance orders.
+
+To enable carrier-calculated rates in Shopify: Settings → Shipping and delivery → Manage rates → add carrier or app.
+
+Note: You need Shopify Advanced or a third-party app for full carrier-calculated rate support.
+
+**When flat rates make sense:** If most of your customers are regional (within 400 miles of your warehouse), zone variability is low enough that a weight-based flat rate can work. Calculate your average shipping cost by weight tier and add 10–15% buffer.
+
+## Step 3: Packaging Strategy
+
+Packaging has a disproportionate impact on heavy-goods shipping costs because it directly affects DIM weight.
+
+Every inch you can reduce on L, W, or H cuts DIM weight significantly. A box that's 40×24×16" has a volume of 15,360 cubic inches and a DIM weight of 110.5 lbs at the 139 divisor. Reduce to 38×22×14" and volume drops to 11,704 cubic inches — DIM weight falls to 84.2 lbs. That's 26 lbs of phantom weight eliminated by tightening the box.
+
+Practical steps:
+- Audit your top 5 SKUs with a tape measure. Are boxes oversized?
+- Work with your packaging supplier on custom sizes for your best-sellers
+- Consider flat-pack designs for furniture — assembles at destination, ships in a much smaller box
+- For fixtures and frames, consider breaking into multiple smaller boxes if per-package handling allows
+
+At $0.45/lb and 200 shipments/month, eliminating 26 lbs of DIM weight is worth $2,808/month — $33,696/year. Packaging optimization is often the highest-ROI logistics project for heavy-goods sellers.
+
+## Step 4: Shopify Shipping Profiles
+
+Use Shopify's shipping profiles to apply different rates to different product groups.
+
+Create a "Heavy Goods" profile for your 50+ lb products with:
+- Carrier-calculated rates (or weight-based rates that reflect actual shipping costs)
+- Restricted shipping zones if you don't serve all of continental US profitably
+- Correct packaging dimensions for rate calculation
+
+Products outside the heavy category can use your default shipping profile with different rate structures.
+
+## Step 5: Managing Customer Expectations on Delivery Time
+
+Shopify's default delivery estimates are calibrated for standard parcel shipping from a single location. For heavy goods with zone-skip routing from multiple warehouses, this needs to be customized.
+
+In Shopify: Settings → Shipping and delivery → Estimated delivery dates.
+
+For ShippingCow customers: 2-day delivery to 90%+ of continental US ZIP codes. Configure your delivery estimates accordingly. Accurate estimates reduce support tickets and improve conversion.
+
+## The 3PL Decision
+
+At some point, self-fulfillment doesn't scale. The inflection point for most heavy-goods sellers is around 200 orders/month — where the operational overhead of receiving, storing, picking, packing, and shipping 50–80 lb products every day stops making sense versus outsourcing to a specialized 3PL.
+
+Before that point, it often makes sense to focus on the packaging and rate optimization steps above. After it, the math on 3PL fulfillment usually works clearly in your favor.
+
+If you're approaching that threshold, the [DIM Weight Calculator](/calculator) will show you exactly what your shipping costs should look like with a DIM 225 3PL. The difference is often enough to fund the outsourcing decision easily.
+
+## Quick Checklist
+
+- [ ] Product shipping weights in Shopify reflect billable weight (not just actual weight)
+- [ ] Carrier-calculated rates enabled for accurate checkout quotes
+- [ ] Packaging dimensions audited for unnecessary volume
+- [ ] Shipping profiles set up to handle heavy products separately
+- [ ] Delivery estimates configured to reflect actual shipping times
+- [ ] DIM weight calculated and tracked for top 5 SKUs monthly
+
+The margin leaks in heavy-goods FBM are almost always in billing weight and zone costs. Fix those two things and your shipping economics change significantly.
+
+[Run your numbers in the DIM calculator →](/calculator)
+
+---
+
+*ShippingCow handles fulfillment for Shopify FBM sellers shipping 50+ lb products. DIM 225. Zone-skip from three US warehouses. [Get a free cost audit →](/inquiry)*
