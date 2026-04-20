@@ -173,18 +173,84 @@ Key rules:
 - Keep responses under 150 words unless a detailed breakdown is truly needed
 - Be direct and helpful — no filler, no corporate fluff`
 
-// ============ Audit & Cost Model Constants ============
+// ============ Last-Mile Shipping Rates (Actual Rate Card) ============
+// ShippingCow contracted rates by billable weight and carrier
 
-export const HANDLING_FEE = 4.50   // Per package
-export const LAST_MILE_FEE = 2.80  // Per package
-
-// FedEx Ground approximate cost per pound by zone
-export const ZONE_RATES: Record<number, number> = {
-  2: 0.32,
-  3: 0.36,
-  4: 0.42,
-  5: 0.50,
-  6: 0.58,
-  7: 0.67,
-  8: 0.78,
+export const GOFO_RATES: Record<number, number> = {
+  1: 5.40, 2: 5.60, 3: 5.90, 4: 6.20, 5: 6.30,
+  6: 6.60, 7: 7.00, 8: 7.20, 9: 7.40, 10: 7.80,
+  11: 9.70, 12: 10.00, 13: 10.40, 14: 10.70, 15: 11.00,
+  16: 11.60, 17: 12.00, 18: 12.20, 19: 12.70, 20: 13.10,
 }
+
+export const FEDEX_RATES: Record<number, number> = {
+  21: 17.00, 22: 17.00, 23: 17.10, 24: 17.30, 25: 17.90,
+  26: 18.20, 27: 18.70, 28: 19.10, 29: 19.70, 30: 20.00,
+  31: 20.40, 32: 20.80, 33: 20.90, 34: 21.50, 35: 22.00,
+  36: 22.30, 37: 22.90, 38: 23.20, 39: 23.50, 40: 24.20,
+  41: 24.30, 42: 25.00, 43: 25.20, 44: 25.90, 45: 26.30,
+  46: 26.40, 47: 26.90, 48: 27.30, 49: 27.70,
+}
+
+export const FEDEX_HEAVY_RATES: Record<number, number> = {
+  50: 35.10, 51: 35.10, 52: 35.10, 53: 35.20, 54: 35.20,
+  55: 35.20, 56: 35.30, 57: 35.50, 58: 35.50, 59: 35.60,
+  60: 36.20, 61: 36.30, 62: 36.70, 63: 36.80, 64: 36.90,
+  65: 37.00, 66: 37.10, 67: 37.20, 68: 37.60, 69: 37.70,
+  70: 38.10, 71: 38.20, 72: 38.60, 73: 38.70, 74: 38.80,
+  75: 38.80, 76: 39.40, 77: 39.80, 78: 40.10, 79: 40.70,
+  80: 41.10, 81: 41.40, 82: 41.90, 83: 41.90, 84: 42.50,
+  85: 42.80, 86: 43.70, 87: 43.90, 88: 44.40, 89: 45.00,
+  90: 50.30, 91: 50.30, 92: 50.60, 93: 50.70, 94: 51.20,
+  95: 51.50, 96: 52.00, 97: 52.80, 98: 53.00, 99: 53.40,
+  100: 53.70, 101: 54.10, 102: 54.20, 103: 54.50, 104: 54.50,
+  105: 55.60, 106: 55.70, 107: 56.00, 108: 56.20, 109: 57.00,
+  110: 57.90, 111: 58.30, 112: 58.50, 113: 58.70, 114: 59.60,
+  115: 60.00, 116: 60.40, 117: 60.70, 118: 61.00, 119: 61.60,
+  120: 62.20, 121: 62.20, 122: 62.80, 123: 63.60, 124: 63.70,
+  125: 63.80, 126: 64.40, 127: 65.10, 128: 65.20, 129: 65.60,
+  130: 66.10, 131: 66.70, 132: 66.80, 133: 67.00, 134: 67.70,
+  135: 68.40, 136: 68.70, 137: 69.00, 138: 69.90, 139: 70.30,
+  140: 70.70, 141: 70.90, 142: 71.40, 143: 71.40, 144: 73.30,
+  145: 73.50, 146: 73.50, 147: 74.00, 148: 74.10, 149: 74.60,
+}
+
+// ============ Handling Fees (Pick & Pack) ============
+// Charged per order by greater of actual or DIM weight (DIM divisor 200)
+
+export const HANDLING_DIM_DIVISOR = 200
+
+export const HANDLING_TIERS = [
+  { maxWeight: 1,   fee: 1.0 },
+  { maxWeight: 5,   fee: 1.5 },
+  { maxWeight: 10,  fee: 2.1 },
+  { maxWeight: 30,  fee: 2.7 },
+  { maxWeight: 50,  fee: 3.6 },
+  { maxWeight: 80,  fee: 5.5 },
+  // Above 80 lbs: $0.10 per lb
+] as const
+
+export const HANDLING_HEAVY_PER_LB = 0.10
+
+// ============ Inbound Fees ============
+
+export const INBOUND_FEES = {
+  container_20gp:    384.0,
+  container_40gp_hq: 480.0,
+  container_45hq:    540.0,
+  pallet_putaway:     12.0,
+  carton_putaway:      2.4,
+} as const
+
+// ============ Storage ============
+
+export const STORAGE_PER_CBF_MONTH = 0.90  // per cubic foot per month
+
+// ============ LTL Trucking ============
+
+export const LTL_COST_PER_MILE = 2.50  // placeholder — will be replaced with broker API
+
+// ============ Pallet Specs ============
+
+export const PALLET_MAX_VOLUME_CBM = 1.8           // cubic meters
+export const PALLET_MAX_VOLUME_CUIN = 1.8 * 61023.7  // cubic inches (≈ 109,842.7 cu in)

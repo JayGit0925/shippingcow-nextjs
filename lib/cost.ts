@@ -1,32 +1,87 @@
 import {
   DIM_DIVISOR_STANDARD,
   DIM_DIVISOR_SHIPPINGCOW,
-  HANDLING_FEE,
-  LAST_MILE_FEE,
-  ZONE_RATES,
+  GOFO_RATES,
+  FEDEX_RATES,
+  FEDEX_HEAVY_RATES,
+  HANDLING_DIM_DIVISOR,
+  HANDLING_TIERS,
+  HANDLING_HEAVY_PER_LB,
 } from './constants';
 import { estimateZone, smartRoute } from './zone';
 
 /**
- * Calculate billable weight (max of actual or dimensional weight)
+ * Get the shipping rate for a given billable weight
+ * Determines carrier (GoFo, FedEx, or FedEx Heavy) based on weight
  */
-export function calculateBillableWeight(
-  length: number,
-  width: number,
-  height: number,
-  actual_weight: number,
-  dim_divisor: number
-): number {
-  const dim_weight = (length * width * height) / dim_divisor;
-  return Math.max(actual_weight, dim_weight);
+export function getShippingRate(billable_weight: number): {
+  carrier: string;
+  rate: number;
+} {
+  const weight = Math.ceil(billable_weight); // Round UP to nearest integer
+
+  if (weight <= 0) {
+    return { carrier: 'none', rate: 0 };
+  }
+
+  if (weight <= 20) {
+    const rate = GOFO_RATES[weight];
+    return { carrier: 'GoFo', rate: rate || GOFO_RATES[20] };
+  }
+
+  if (weight <= 49) {
+    const rate = FEDEX_RATES[weight];
+    return { carrier: 'FedEx', rate: rate || FEDEX_RATES[49] };
+  }
+
+  if (weight <= 149) {
+    const rate = FEDEX_HEAVY_RATES[weight];
+    return { carrier: 'FedEx Heavy', rate: rate || FEDEX_HEAVY_RATES[149] };
+  }
+
+  // Above 149 lbs, cap at the 149 lb rate
+  return { carrier: 'FedEx Heavy (capped)', rate: FEDEX_HEAVY_RATES[149] };
 }
 
 /**
- * Calculate shipping cost for a given billable weight and zone
+ * Calculate handling fee based on billable weight (using DIM divisor 200)
  */
-export function calculateShipmentCost(billable_weight: number, zone: number): number {
-  const rate = ZONE_RATES[zone] || 0.78; // Default to zone 8 if zone not found
-  return billable_weight * rate;
+export function getHandlingFee(
+  length: number,
+  width: number,
+  height: number,
+  actual_weight: number
+): number {
+  const dim_weight = (length * width * height) / HANDLING_DIM_DIVISOR;
+  const billable = Math.max(actual_weight, dim_weight);
+
+  // Above 80 lbs: charge per pound
+  if (billable > 80) {
+    return billable * HANDLING_HEAVY_PER_LB;
+  }
+
+  // Find the tier
+  for (const tier of HANDLING_TIERS) {
+    if (billable <= tier.maxWeight) {
+      return tier.fee;
+    }
+  }
+
+  // Fallback (shouldn't reach here)
+  return HANDLING_TIERS[HANDLING_TIERS.length - 1].fee;
+}
+
+/**
+ * Calculate storage volume in cubic feet
+ */
+export function calculateStorageCBF(
+  length: number,
+  width: number,
+  height: number
+): number {
+  const volume_cuin = length * width * height;
+  const volume_cbf = volume_cuin / 1728; // 1 cubic foot = 1728 cubic inches
+  return volume_cbf;
 }
 
 /**
@@ -44,7 +99,7 @@ export type ShipmentAnalysis = {
   sc_zone: number;
   sc_distance: number;
   sc_billable_225: number;
-  sc_cost: number; // includes handling + last-mile
+  sc_cost: number; // includes handling + shipping
 
   // Savings
   savings_per_package: number;
@@ -52,9 +107,7 @@ export type ShipmentAnalysis = {
 };
 
 /**
- * Analyze a single shipment row
- * @param row Shipment data with origin/dest ZIPs, dimensions, weight
- * @returns Full analysis including current costs and ShippingCow savings
+ * Analyze a single shipment row using real rate cards
  */
 export async function analyzeShipment(row: {
   origin_zip: string;
@@ -79,12 +132,17 @@ export async function analyzeShipment(row: {
     row.weight,
     DIM_DIVISOR_STANDARD
   );
-  const current_cost = calculateShipmentCost(current_billable_139, currentZoneData.zone);
+
+  // Current cost using approximate zone rate
+  const approximateRateByZone = {
+    2: 0.32, 3: 0.36, 4: 0.42, 5: 0.50, 6: 0.58, 7: 0.67, 8: 0.78,
+  };
+  const approxRate = approximateRateByZone[currentZoneData.zone as keyof typeof approximateRateByZone] || 0.78;
+  const current_cost = current_billable_139 * approxRate;
 
   // Estimate ShippingCow state (best warehouse → destination, DIM 225)
   const routing = await smartRoute(row.dest_zip);
 
-  // Get warehouse coordinates for distance calculation
   const sc_zone = routing.zone;
   const sc_distance = routing.distance_miles;
 
@@ -95,8 +153,11 @@ export async function analyzeShipment(row: {
     row.weight,
     DIM_DIVISOR_SHIPPINGCOW
   );
-  const sc_base_cost = calculateShipmentCost(sc_billable_225, sc_zone);
-  const sc_cost = sc_base_cost + HANDLING_FEE + LAST_MILE_FEE;
+
+  // ShippingCow cost using real rate card
+  const shippingRate = getShippingRate(sc_billable_225);
+  const handlingFee = getHandlingFee(row.length, row.width, row.height, row.weight);
+  const sc_cost = shippingRate.rate + handlingFee;
 
   const savings_per_package = current_cost - sc_cost;
   const zone_improvement = currentZoneData.zone - sc_zone;
@@ -116,4 +177,18 @@ export async function analyzeShipment(row: {
     savings_per_package,
     zone_improvement,
   };
+}
+
+/**
+ * Calculate billable weight (max of actual or dimensional weight)
+ */
+export function calculateBillableWeight(
+  length: number,
+  width: number,
+  height: number,
+  actual_weight: number,
+  dim_divisor: number
+): number {
+  const dim_weight = (length * width * height) / dim_divisor;
+  return Math.max(actual_weight, dim_weight);
 }
