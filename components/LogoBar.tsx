@@ -1,3 +1,4 @@
+'use client';
 // TODO: replace placeholder text logos with real partner/customer logo images
 
 const LOGOS = [

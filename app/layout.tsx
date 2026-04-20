@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import ChatWidget from '@/components/ChatWidget';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://shippingcow.io'),
   title: 'Shipping Cow — Heavy Goods 3PL & E-Commerce Fulfillment | Cut Shipping Costs 80%',
   description:
     'Shipping Cow AI is the #1 fulfillment platform for heavy goods sellers. Cut FedEx costs up to 80%, guarantee 2-day delivery, and automate your logistics paperwork with AI.',
