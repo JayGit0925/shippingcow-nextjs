@@ -63,20 +63,15 @@ const COLUMN_ALIASES: Record<string, string> = {
   'price': 'current_cost',
 };
 
-function normalizeColumnName(name: string): string {
-  const lower = name.toLowerCase().trim();
-  return COLUMN_ALIASES[lower] || lower;
-}
-
 function fuzzyMatchColumns(headers: string[]): Record<string, number> {
-  const normalized = headers.map((h) => normalizeColumnName(h));
   const mapping: Record<string, number> = {};
 
-  for (let i = 0; i < normalized.length; i++) {
-    const col = normalized[i];
-    if (COLUMN_ALIASES[col]) {
-      const key = COLUMN_ALIASES[col];
-      if (!mapping[key]) mapping[key] = i;
+  for (let i = 0; i < headers.length; i++) {
+    const lower = headers[i].toLowerCase().trim();
+    const mappedKey = COLUMN_ALIASES[lower];
+
+    if (mappedKey && !mapping[mappedKey]) {
+      mapping[mappedKey] = i;
     }
   }
 
