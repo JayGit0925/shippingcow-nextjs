@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { analyzeShipment, type ShipmentAnalysis } from '@/lib/cost';
+import { analyzeShipment, type ShipmentAnalysis, getHandlingFee } from '@/lib/cost';
 import { saveAudit, getAudit } from '@/lib/db';
 
 const shipmentSchema = z.object({
@@ -161,8 +161,13 @@ export async function POST(req: Request) {
       // Cost aggregates
       total_current_cost += detail.current_cost * qty;
       total_sc_cost += detail.sc_cost * qty;
-      total_handling_fees += 4.50 * qty;
-      total_last_mile_fees += 2.80 * qty;
+
+      // Break down SC cost into components for report
+      const handlingFee = getHandlingFee(detail.length, detail.width, detail.height, detail.weight);
+      total_handling_fees += handlingFee * qty;
+      // Shipping rate is included in sc_cost along with handling
+      const shippingOnly = detail.sc_cost - handlingFee;
+      total_last_mile_fees += shippingOnly * qty;
 
       // Zone improvements
       if (detail.zone_improvement > 0) {

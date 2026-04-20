@@ -133,12 +133,10 @@ export async function analyzeShipment(row: {
     DIM_DIVISOR_STANDARD
   );
 
-  // Current cost using approximate zone rate
-  const approximateRateByZone = {
-    2: 0.32, 3: 0.36, 4: 0.42, 5: 0.50, 6: 0.58, 7: 0.67, 8: 0.78,
-  };
-  const approxRate = approximateRateByZone[currentZoneData.zone as keyof typeof approximateRateByZone] || 0.78;
-  const current_cost = current_billable_139 * approxRate;
+  // Current cost using real rate card (standard carrier rates)
+  const currentShippingRate = getShippingRate(current_billable_139);
+  const currentHandlingFee = getHandlingFee(row.length, row.width, row.height, row.weight);
+  const current_cost = currentShippingRate.rate + currentHandlingFee;
 
   // Estimate ShippingCow state (best warehouse → destination, DIM 225)
   const routing = await smartRoute(row.dest_zip);
