@@ -66,15 +66,21 @@ const COLUMN_ALIASES: Record<string, string> = {
 function fuzzyMatchColumns(headers: string[]): Record<string, number> {
   const mapping: Record<string, number> = {};
 
+  console.log('📋 Raw headers from file:', headers);
+  console.log('🔍 Header aliases available:', Object.keys(COLUMN_ALIASES));
+
   for (let i = 0; i < headers.length; i++) {
     const lower = headers[i].toLowerCase().trim();
     const mappedKey = COLUMN_ALIASES[lower];
+
+    console.log(`  Col ${i}: "${headers[i]}" → "${lower}" → "${mappedKey || 'NOT FOUND'}"`);
 
     if (mappedKey && !mapping[mappedKey]) {
       mapping[mappedKey] = i;
     }
   }
 
+  console.log('✅ Final mapping:', mapping);
   return mapping;
 }
 
@@ -91,11 +97,14 @@ function parseFile(file: File): Promise<{rows: any[], headers: string[]} | {erro
         if (!worksheet) return resolve({error: 'No sheet found'});
 
         const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1}) as any[];
+        console.log('📊 XLSX raw data (first 2 rows):', jsonData.slice(0, 2));
+
         if (jsonData.length < 2) return resolve({error: 'File must have headers and at least 1 data row'});
 
-        const headers = jsonData[0] as string[];
+        const headers = (jsonData[0] as any[]).map((h) => String(h || '').trim());
         const rows = jsonData.slice(1) as any[][];
 
+        console.log('📋 Extracted headers:', headers);
         resolve({rows, headers});
       } catch (err) {
         resolve({error: err instanceof Error ? err.message : 'Parse error'});
@@ -152,12 +161,15 @@ export default function AuditPage() {
     }
 
     const {rows, headers} = parsed;
+    console.log('📥 Parsed headers:', headers);
     const colMapping = fuzzyMatchColumns(headers);
 
     const required = ['origin_zip', 'dest_zip', 'weight'];
     const missing = required.filter((col) => !colMapping[col]);
+
     if (missing.length > 0) {
-      setState({type: 'upload', error: `Missing columns: ${missing.join(', ')}`});
+      const availableCols = Object.keys(colMapping).join(', ');
+      setState({type: 'upload', error: `Missing columns: ${missing.join(', ')}. Found: ${availableCols}`});
       return;
     }
 
@@ -542,6 +554,9 @@ function ReportView({state}: {state: ReportState}) {
           </div>
         </Section>
 
+        {/* Section 6: Pallet Calculator */}
+        <PalletCalculator />
+
         {/* Final CTA */}
         <div style={{marginTop: '3rem', textAlign: 'center', background: 'var(--yellow)', padding: '2rem', border: '3px solid var(--dark)', boxShadow: '4px 4px 0 var(--dark)'}}>
           <h3 style={{fontFamily: 'var(--font-display)', fontSize: '1.3rem', margin: '0 0 0.5rem 0'}}>
@@ -635,6 +650,195 @@ function ComparisonBar({before, after}: {before: number; after: number}) {
         <div style={{fontSize: '1rem', fontWeight: 700, marginTop: '0.5rem'}}>{after.toFixed(1)} lbs</div>
       </div>
     </div>
+  );
+}
+
+// ============ PALLET CALCULATOR ============
+
+function PalletCalculator() {
+  const [originZip, setOriginZip] = useState('08901'); // Default to NJ
+  const [skus, setSkus] = useState<Array<{id: string; name?: string; length: number; width: number; height: number; weight: number}>>([
+    {id: '1', name: '', length: 12, width: 10, height: 8, weight: 25},
+  ]);
+  const [results, setResults] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const addSku = () => {
+    const newId = String(Math.max(...skus.map(s => parseInt(s.id) || 0), 0) + 1);
+    setSkus([...skus, {id: newId, name: '', length: 12, width: 10, height: 8, weight: 25}]);
+  };
+
+  const removeSku = (id: string) => {
+    if (skus.length > 1) {
+      setSkus(skus.filter(s => s.id !== id));
+    }
+  };
+
+  const updateSku = (id: string, field: string, value: any) => {
+    setSkus(skus.map(s => (s.id === id ? {...s, [field]: value} : s)));
+  };
+
+  const calculatePallets = async () => {
+    if (!originZip || skus.length === 0) {
+      setError('Please enter an origin ZIP and at least one SKU');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/audit/pallet', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          origin_zip: originZip.padStart(5, '0'),
+          skus: skus.map(({id, ...rest}) => rest),
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        setError(err.error || 'Calculation failed');
+        return;
+      }
+
+      const data = await res.json();
+      setResults(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Section title="Inbound Pallet Costs">
+      <div style={{marginTop: '2rem'}}>
+        {/* Input Form */}
+        <div style={{background: '#F9FAFB', border: '2px solid #E5E7EB', borderRadius: '6px', padding: '1.5rem', marginBottom: '2rem'}}>
+          <div style={{marginBottom: '1.5rem'}}>
+            <label style={{display: 'block', fontWeight: 600, marginBottom: '0.5rem'}}>Origin ZIP (where you ship from)</label>
+            <input
+              type="text"
+              value={originZip}
+              onChange={(e) => setOriginZip(e.target.value.slice(0, 5))}
+              placeholder="08901"
+              style={{width: '100%', maxWidth: '200px', padding: '0.75rem', border: '2px solid #D1D5DB', borderRadius: '4px', fontSize: '1rem'}}
+            />
+          </div>
+
+          {/* SKU Rows */}
+          <div style={{marginBottom: '1.5rem'}}>
+            <label style={{display: 'block', fontWeight: 600, marginBottom: '0.75rem'}}>SKUs (products)</label>
+            {skus.map((sku, idx) => (
+              <div key={sku.id} style={{display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', gap: '0.75rem', marginBottom: '0.75rem', alignItems: 'flex-end'}}>
+                <input
+                  type="text"
+                  placeholder="Product name (optional)"
+                  value={sku.name || ''}
+                  onChange={(e) => updateSku(sku.id, 'name', e.target.value)}
+                  style={{padding: '0.5rem', border: '1px solid #D1D5DB', borderRadius: '3px', fontSize: '0.9rem'}}
+                />
+                <input
+                  type="number"
+                  placeholder="L"
+                  value={sku.length}
+                  onChange={(e) => updateSku(sku.id, 'length', parseFloat(e.target.value) || 0)}
+                  style={{padding: '0.5rem', border: '1px solid #D1D5DB', borderRadius: '3px', fontSize: '0.9rem'}}
+                />
+                <input
+                  type="number"
+                  placeholder="W"
+                  value={sku.width}
+                  onChange={(e) => updateSku(sku.id, 'width', parseFloat(e.target.value) || 0)}
+                  style={{padding: '0.5rem', border: '1px solid #D1D5DB', borderRadius: '3px', fontSize: '0.9rem'}}
+                />
+                <input
+                  type="number"
+                  placeholder="H"
+                  value={sku.height}
+                  onChange={(e) => updateSku(sku.id, 'height', parseFloat(e.target.value) || 0)}
+                  style={{padding: '0.5rem', border: '1px solid #D1D5DB', borderRadius: '3px', fontSize: '0.9rem'}}
+                />
+                <input
+                  type="number"
+                  placeholder="Wt (lbs)"
+                  value={sku.weight}
+                  onChange={(e) => updateSku(sku.id, 'weight', parseFloat(e.target.value) || 0)}
+                  style={{padding: '0.5rem', border: '1px solid #D1D5DB', borderRadius: '3px', fontSize: '0.9rem'}}
+                />
+                <button
+                  onClick={() => removeSku(sku.id)}
+                  style={{padding: '0.5rem 0.75rem', background: '#FEE2E2', border: '1px solid #FECACA', borderRadius: '3px', cursor: 'pointer', fontSize: '0.85rem', color: '#DC2626'}}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={addSku}
+              className="btn btn--ghost"
+              style={{marginTop: '0.75rem', padding: '0.5rem 1rem', fontSize: '0.9rem'}}
+            >
+              + Add SKU
+            </button>
+          </div>
+
+          {error && (
+            <div style={{background: '#FEE2E2', border: '2px solid #DC2626', color: '#7F1D1D', padding: '1rem', borderRadius: '6px', marginBottom: '1.5rem'}}>
+              ❌ {error}
+            </div>
+          )}
+
+          <button
+            onClick={calculatePallets}
+            disabled={loading}
+            className="btn btn--blue"
+            style={{width: '100%', padding: '0.75rem'}}
+          >
+            {loading ? '🔄 Calculating...' : '📦 Calculate Pallet Costs'}
+          </button>
+        </div>
+
+        {/* Results */}
+        {results && (
+          <div>
+            <div style={{marginBottom: '1.5rem', background: '#F0FDF4', border: '2px solid #86EFAC', borderRadius: '6px', padding: '1.5rem'}}>
+              <div style={{fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem'}}>✅ Results for {results.sku_count} SKU{results.sku_count !== 1 ? 's' : ''}</div>
+              <div style={{fontSize: '1rem', color: '#1A202C'}}>
+                Total inbound cost: <strong style={{color: 'var(--blue)', fontSize: '1.3rem'}}>${results.totals.total_pallet_cost.toFixed(2)}</strong>
+              </div>
+              <div style={{fontSize: '0.9rem', color: '#666', marginTop: '0.5rem'}}>
+                {results.totals.total_units_per_pallet} total units, ${results.totals.avg_cost_per_unit.toFixed(2)} cost per unit (all-in)
+              </div>
+            </div>
+
+            {/* Cost Cards */}
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem'}}>
+              {results.results.map((r: any, i: number) => (
+                <div key={i} style={{border: '2px solid #E5E7EB', borderRadius: '6px', padding: '1.5rem', background: '#fff'}}>
+                  <div style={{fontSize: '0.85rem', fontFamily: 'var(--font-pixel)', color: 'var(--blue)', marginBottom: '0.75rem', textTransform: 'uppercase', fontWeight: 600}}>
+                    {r.sku.name || `SKU ${i + 1}`}
+                  </div>
+                  <div style={{fontSize: '0.9rem', lineHeight: '1.8', color: '#666'}}>
+                    <div><strong>Warehouse:</strong> {r.closest_warehouse} ({r.warehouse_city}, {r.warehouse_state})</div>
+                    <div><strong>Trucking:</strong> {r.trucking_distance_miles.toFixed(0)} mi → ${r.trucking_cost.toFixed(2)}</div>
+                    <div><strong>Units/pallet:</strong> {r.units_per_pallet}</div>
+                    <div><strong>Receiving:</strong> ${r.inbound_receiving.toFixed(2)}</div>
+                    <div style={{marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #E5E7EB', fontSize: '0.85rem', fontWeight: 600}}>
+                      <div>Per-unit (all-in): ${r.per_unit.total.toFixed(2)}</div>
+                      <div style={{color: 'var(--blue)', fontSize: '1.1rem', marginTop: '0.5rem'}}>Pallet Total: ${r.pallet_total.toFixed(2)}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </Section>
   );
 }
 

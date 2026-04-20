@@ -66,9 +66,9 @@ export async function estimateZone(
  * ShippingCow warehouses with their ZIP codes and coordinates
  */
 export const WAREHOUSES = [
-  { name: 'NJ', zip: '08901', lat: 40.1839, lng: -74.2590 },
-  { name: 'TX', zip: '77489', lat: 29.3752, lng: -95.3556 },
-  { name: 'CA', zip: '91761', lat: 34.0595, lng: -117.5320 },
+  { name: 'NJ', label: 'NJ', zip: '08901', lat: 40.1839, lng: -74.2590, city: 'New Brunswick', state: 'NJ' },
+  { name: 'TX', label: 'TX', zip: '77489', lat: 29.3752, lng: -95.3556, city: 'Missouri City', state: 'TX' },
+  { name: 'CA', label: 'CA', zip: '91761', lat: 34.0595, lng: -117.5320, city: 'Ontario', state: 'CA' },
 ];
 
 /**
