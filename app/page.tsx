@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import HeroTracker from '@/components/HeroTracker';
 import ShrinkageCalculator from '@/components/ShrinkageCalculator';
@@ -7,10 +8,38 @@ import SocialProof from '@/components/SocialProof';
 import SellerCallout from '@/components/SellerCallout';
 import FAQ from '@/components/FAQ';
 import FinalCTA from '@/components/FinalCTA';
+import LogoBar from '@/components/LogoBar';
+
+export const metadata: Metadata = {
+  title:       'ShippingCow — Heavy Goods Fulfillment with DIM 225 Pricing',
+  description: 'The only 3PL built for the 50 lb+ seller. DIM divisor 225 means up to 39% lower shipping costs. Enterprise FedEx rates. 2-day delivery to 92% of the US. Zero shrinkage guaranteed.',
+  openGraph: {
+    title:       'ShippingCow — Heavy Goods Fulfillment with DIM 225 Pricing',
+    description: 'DIM 225 pricing. Enterprise carrier rates. Zero shrinkage. 2-day delivery.',
+    type:        'website',
+    url:         'https://shippingcow.io',
+  },
+};
+
+const JSON_LD = {
+  '@context':   'https://schema.org',
+  '@type':      'Organization',
+  name:         'ShippingCow',
+  url:          'https://shippingcow.io',
+  description:  'AI-native heavy-goods fulfillment platform with DIM 225 pricing, enterprise carrier rates, and guaranteed 2-day delivery to 92% of the continental US.',
+  foundingDate: '2026',
+  areaServed:   'US',
+  serviceType:  '3PL Fulfillment, Freight, Returns',
+};
 
 export default function HomePage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+      />
+
       {/* ============ HERO ============ */}
       <section className="hero" id="home">
         <div className="container">
@@ -50,6 +79,9 @@ export default function HomePage() {
           <HeroTracker />
         </div>
       </section>
+
+      {/* ============ LOGO BAR ============ */}
+      <LogoBar />
 
       {/* ============ PAIN POINTS ============ */}
       <section className="pain">

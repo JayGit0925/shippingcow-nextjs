@@ -647,10 +647,230 @@ img, svg { max-width: 100%; display: block; }
   .form-card { padding: 1.5rem; }
 }
 
+/* ============ DIM CALCULATOR ============ */
+.dim-calculator {
+  margin-top: 2.5rem;
+}
+.dim-calculator__grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+.dim-calculator__inputs {
+  background: var(--white);
+  border: 4px solid var(--dark);
+  padding: 1.8rem;
+  box-shadow: var(--shadow-pixel);
+  position: sticky;
+  top: 5rem;
+}
+.dim-calculator__results {
+  /* flows naturally */
+}
+.dim-calculator__field {
+  margin-bottom: 1.1rem;
+}
+.dim-calculator__label {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dark);
+  margin-bottom: 0.35rem;
+}
+.dim-calculator__input {
+  width: 100%;
+  border: 3px solid var(--dark);
+  padding: 0.55rem 0.8rem;
+  font-size: 1.1rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  background: #f8fafc;
+  box-shadow: 3px 3px 0 var(--dark);
+  outline: none;
+  -moz-appearance: textfield;
+}
+.dim-calculator__input::-webkit-inner-spin-button,
+.dim-calculator__input::-webkit-outer-spin-button {
+  opacity: 1;
+}
+.dim-calculator__input:focus {
+  border-color: var(--blue);
+  box-shadow: 3px 3px 0 var(--blue);
+  background: #fff;
+}
+@media (max-width: 768px) {
+  .dim-calculator__grid {
+    grid-template-columns: 1fr;
+  }
+  .dim-calculator__inputs {
+    position: static;
+  }
+}
+
+/* ============ DASHBOARD ============ */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: calc(100vh - 64px);
+}
+.dashboard-sidebar {
+  background: var(--dark);
+  padding: 2rem 0;
+  border-right: 4px solid var(--dark);
+}
+.dashboard-sidebar__logo {
+  padding: 0 1.5rem 1.5rem;
+  border-bottom: 2px solid rgba(255,255,255,0.1);
+  margin-bottom: 1rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.dashboard-sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.5rem;
+  color: rgba(255,255,255,0.7);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.15s, color 0.15s;
+  text-decoration: none;
+}
+.dashboard-sidebar a:hover,
+.dashboard-sidebar a.active {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+.dashboard-sidebar a.active {
+  border-left: 4px solid var(--yellow);
+  padding-left: calc(1.5rem - 4px);
+}
+.dashboard-main {
+  padding: 2.5rem;
+  background: #f8fafc;
+}
+@media (max-width: 768px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-sidebar {
+    display: none;
+  }
+}
+
+/* ============ FUNNEL / INQUIRY ============ */
+.funnel-progress {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+}
+.funnel-step {
+  flex: 1;
+  height: 8px;
+  background: rgba(0,0,0,0.12);
+  border-radius: 0;
+  border: 2px solid var(--dark);
+}
+.funnel-step--done   { background: var(--blue); }
+.funnel-step--active { background: var(--yellow); }
+
 /* ============================================================
    Tailwind CSS — components and utilities only.
    preflight is disabled in tailwind.config.ts so these
    directives don't reset the design system above.
    ============================================================ */
+/* ============ BLOG PROSE ============ */
+.blog-prose {
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: #1a202c;
+}
+.blog-prose h2 {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  text-transform: uppercase;
+  margin: 2.5rem 0 0.8rem;
+  color: var(--dark);
+}
+.blog-prose h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  margin: 2rem 0 0.6rem;
+  color: var(--dark);
+}
+.blog-prose p  { margin-bottom: 1.2rem; }
+.blog-prose ul,
+.blog-prose ol { margin: 0.8rem 0 1.2rem 1.5rem; }
+.blog-prose li { margin-bottom: 0.4rem; }
+.blog-prose strong { font-weight: 700; }
+.blog-prose a  { color: var(--blue); font-weight: 600; }
+.blog-prose a:hover { text-decoration: underline; }
+.blog-prose code {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 0.15em 0.4em;
+  font-size: 0.88em;
+  font-family: monospace;
+  border-radius: 3px;
+}
+.blog-prose pre {
+  background: #1a202c;
+  color: #e2e8f0;
+  padding: 1.2rem 1.5rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border: 3px solid var(--dark);
+  box-shadow: var(--shadow-pixel);
+}
+.blog-prose pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.9rem;
+  color: inherit;
+}
+.blog-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.92rem;
+}
+.blog-prose th {
+  background: var(--dark);
+  color: #fff;
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+.blog-prose td {
+  border: 2px solid #e2e8f0;
+  padding: 0.55rem 0.9rem;
+}
+.blog-prose tr:nth-child(even) td { background: #f8fafc; }
+.blog-prose blockquote {
+  border-left: 4px solid var(--blue);
+  padding: 0.8rem 1.2rem;
+  margin: 1.5rem 0;
+  background: #f0f7ff;
+  font-style: italic;
+}
+.blog-prose hr { border: 0; border-top: 3px solid var(--dark); margin: 2.5rem 0; }
+
+@media (max-width: 900px) {
+  .blog-grid { grid-template-columns: 1fr !important; }
+  .blog-grid aside { position: static !important; }
+}
+
 @tailwind components;
 @tailwind utilities;

@@ -33,7 +33,12 @@ export default function TrackPage() {
     <div className="form-page">
       <div className="form-card form-card--wide">
         <span className="cow-logo form-card__cow" role="img" aria-label="Shipping Cow" style={{ height: 70 }} />
-        <h1>Track Your Package</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+          <h1 style={{ margin: 0 }}>Track Your Package</h1>
+          <span style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', background: 'var(--yellow)', color: 'var(--dark)', padding: '0.2rem 0.5rem', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+            DEMO MODE
+          </span>
+        </div>
         <p className="form-card__sub">
           Enter your Shipping Cow tracking number below. Try <strong>SC123456789</strong>, <strong>SC987654321</strong>, or <strong>SC111222333</strong> to see the demo.
         </p>

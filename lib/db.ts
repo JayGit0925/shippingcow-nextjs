@@ -1,5 +1,9 @@
 import postgres from 'postgres';
 
+// postgres.js requires JSONValue for sql.json(); this cast bridges our loose types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const asJson = (v: Record<string, unknown>) => v as any;
+
 const globalForDb = globalThis as unknown as { sql?: ReturnType<typeof postgres> };
 
 export const sql =
@@ -125,6 +129,150 @@ export async function getTracking(trackingNumber: string) {
     LIMIT 1
   `;
   return rows[0];
+}
+
+// ============ Lead helpers ============
+
+export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted'
+
+export type Lead = {
+  id: string
+  created_at: string
+  updated_at: string
+  step_completed: number
+  step_timestamps: Record<string, string>
+  step1_data: Record<string, unknown> | null
+  step2_data: Record<string, unknown> | null
+  step3_data: Record<string, unknown> | null
+  step4_data: Record<string, unknown> | null
+  savings_estimate: Record<string, unknown> | null
+  source_url: string | null
+  status: LeadStatus
+}
+
+export async function createLead(params: {
+  step1_data: Record<string, unknown>
+  source_url?: string
+}): Promise<Lead> {
+  const rows = await sql<Lead[]>`
+    INSERT INTO leads (step1_data, source_url, step_completed, step_timestamps)
+    VALUES (
+      ${sql.json(asJson(params.step1_data))},
+      ${params.source_url ?? null},
+      1,
+      ${sql.json({ 1: new Date().toISOString() })}
+    )
+    RETURNING *
+  `
+  return rows[0]
+}
+
+export async function updateLead(
+  id: string,
+  params: {
+    step_completed: number
+    step2_data?: Record<string, unknown>
+    step3_data?: Record<string, unknown>
+    step4_data?: Record<string, unknown>
+    savings_estimate?: Record<string, unknown>
+    status?: LeadStatus
+  },
+): Promise<Lead> {
+  const stepKey = `${params.step_completed}`
+  const rows = await sql<Lead[]>`
+    UPDATE leads
+    SET
+      step_completed   = GREATEST(step_completed, ${params.step_completed}),
+      step_timestamps  = step_timestamps || ${sql.json(asJson({ [stepKey]: new Date().toISOString() }))},
+      step2_data       = COALESCE(${params.step2_data ? sql.json(asJson(params.step2_data)) : sql`step2_data`}, step2_data),
+      step3_data       = COALESCE(${params.step3_data ? sql.json(asJson(params.step3_data)) : sql`step3_data`}, step3_data),
+      step4_data       = COALESCE(${params.step4_data ? sql.json(asJson(params.step4_data)) : sql`step4_data`}, step4_data),
+      savings_estimate = COALESCE(${params.savings_estimate ? sql.json(asJson(params.savings_estimate)) : sql`savings_estimate`}, savings_estimate),
+      status           = COALESCE(${params.status ?? null}, status)
+    WHERE id = ${id}
+    RETURNING *
+  `
+  return rows[0]
+}
+
+// ============ Calculator session helpers ============
+
+export type CalculatorSession = {
+  id: string
+  created_at: string
+  session_id: string | null
+  inputs: Record<string, unknown> | null
+  dim_weight_139: number | null
+  dim_weight_166: number | null
+  dim_weight_225: number | null
+  billable_weight_139: number | null
+  billable_weight_225: number | null
+  savings_per_package: number | null
+  annual_savings: number | null
+  converted_to_lead: boolean
+  lead_id: string | null
+}
+
+export async function saveCalculatorSession(params: {
+  session_id?: string
+  inputs: { length: number; width: number; height: number; actual_weight: number; monthly_volume: number }
+  dim_weight_139: number
+  dim_weight_166: number
+  dim_weight_225: number
+  billable_weight_139: number
+  billable_weight_225: number
+  savings_per_package: number
+  annual_savings: number
+}): Promise<CalculatorSession> {
+  const rows = await sql<CalculatorSession[]>`
+    INSERT INTO calculator_sessions (
+      session_id, inputs,
+      dim_weight_139, dim_weight_166, dim_weight_225,
+      billable_weight_139, billable_weight_225,
+      savings_per_package, annual_savings
+    ) VALUES (
+      ${params.session_id ?? null},
+      ${sql.json(asJson(params.inputs))},
+      ${params.dim_weight_139},
+      ${params.dim_weight_166},
+      ${params.dim_weight_225},
+      ${params.billable_weight_139},
+      ${params.billable_weight_225},
+      ${params.savings_per_package},
+      ${params.annual_savings}
+    )
+    RETURNING *
+  `
+  return rows[0]
+}
+
+// ============ Chat message helpers ============
+
+export async function saveChatMessage(params: {
+  session_id: string
+  role: 'user' | 'assistant'
+  content: string
+  page_url?: string
+  lead_id?: string
+}): Promise<void> {
+  await sql`
+    INSERT INTO chat_messages (session_id, role, content, page_url, lead_id)
+    VALUES (
+      ${params.session_id},
+      ${params.role},
+      ${params.content},
+      ${params.page_url ?? null},
+      ${params.lead_id ?? null}
+    )
+  `
+}
+
+export async function linkChatToLead(sessionId: string, leadId: string): Promise<void> {
+  await sql`
+    UPDATE chat_messages
+    SET lead_id = ${leadId}
+    WHERE session_id = ${sessionId} AND lead_id IS NULL
+  `
 }
 
 // ============ Password reset helpers ============

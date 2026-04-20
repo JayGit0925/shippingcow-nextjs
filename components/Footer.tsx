@@ -21,7 +21,10 @@ export default function Footer() {
               <li><Link href="/#services">Services</Link></li>
               <li><Link href="/#cow-guaranteed">Guarantees</Link></li>
               <li><Link href="/#pricing">Pricing</Link></li>
+              <li><Link href="/calculator">DIM Calculator</Link></li>
+              <li><Link href="/big-and-bulky">Big &amp; Bulky</Link></li>
               <li><Link href="/track">Track Package</Link></li>
+              <li><Link href="/blog">Blog</Link></li>
             </ul>
           </div>
 
@@ -30,8 +33,7 @@ export default function Footer() {
             <ul>
               <li><Link href="/#about">About Us</Link></li>
               <li><Link href="/inquiry">Contact</Link></li>
-              <li><a href="#">Careers</a></li>
-              <li><a href="#">Press Kit</a></li>
+              <li><Link href="/inquiry">Get a Quote</Link></li>
             </ul>
           </div>
 
@@ -41,14 +43,14 @@ export default function Footer() {
               <li><Link href="/login">Log In</Link></li>
               <li><Link href="/signup">Sign Up</Link></li>
               <li><Link href="/dashboard">Dashboard</Link></li>
-              <li><Link href="/inquiry">Get Free Audit</Link></li>
+              <li><Link href="/inquiry">Free Audit</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="footer__bottom">
           <div>© {new Date().getFullYear()} Shipping Cow AI, Inc. · Moo-ving heavy goods since 2026.</div>
-          <div>Privacy · Terms · Cookie Settings</div>
+          <div>Privacy · Terms</div>
         </div>
       </div>
     </footer>

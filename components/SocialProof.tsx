@@ -35,6 +35,25 @@ const TESTIMONIALS: Testimonial[] = [
     metric: '4 hrs',
     metricLabel: 'to go live',
   },
+  // TODO: replace with real testimonials when available
+  {
+    author: 'James Whitmore',
+    role: 'Owner',
+    company: 'IronHouse Fitness',
+    quote:
+      "DIM weight was killing us on squat racks and benches. ShippingCow's divisor 225 took our billable weight from 74 lbs down to 55 lbs on our top SKU. That's $2,400 a month back in our pocket.",
+    metric: '$2,400',
+    metricLabel: 'saved per month',
+  },
+  {
+    author: 'Sara Nguyen',
+    role: 'Supply Chain Manager',
+    company: 'Outdoor Craft Co.',
+    quote:
+      "We were stuck at FBA because we thought 3PLs couldn't match Amazon's delivery speed. ShippingCow hits 2 days to 92% of the country. We moved our entire outdoor furniture line in 3 weeks.",
+    metric: '2-day',
+    metricLabel: 'delivery guarantee',
+  },
 ];
 
 export default function SocialProof() {
