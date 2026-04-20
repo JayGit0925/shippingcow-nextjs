@@ -41,6 +41,7 @@ export default function Nav() {
           <li><Link href="/#services" onClick={() => setOpen(false)}>Services</Link></li>
           <li><Link href="/big-and-bulky" className={pathname === '/big-and-bulky' ? 'active' : ''} onClick={() => setOpen(false)}>Big &amp; Bulky</Link></li>
           <li><Link href="/calculator" className={pathname === '/calculator' ? 'active' : ''} onClick={() => setOpen(false)}>Calculator</Link></li>
+          <li><Link href="/blog" className={pathname.startsWith('/blog') ? 'active' : ''} onClick={() => setOpen(false)}>Blog</Link></li>
           <li><Link href="/track" className={pathname === '/track' ? 'active' : ''} onClick={() => setOpen(false)}>Track</Link></li>
           <li><Link href="/inquiry" className={pathname === '/inquiry' ? 'active' : ''} onClick={() => setOpen(false)}>Inquiry</Link></li>
         </ul>
