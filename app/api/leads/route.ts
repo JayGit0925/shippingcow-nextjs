@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createLead } from '@/lib/db';
+import { createLead, sql } from '@/lib/db';
 
 const bodySchema = z.object({
   monthly_spend:    z.string().min(1),
@@ -8,6 +8,16 @@ const bodySchema = z.object({
   product_category: z.string().min(1),
   source_url:       z.string().optional(),
 });
+
+export async function GET() {
+  try {
+    const leads = await sql`SELECT * FROM leads ORDER BY created_at DESC LIMIT 100`;
+    return NextResponse.json(leads);
+  } catch (err) {
+    console.error('[leads GET]', err);
+    return NextResponse.json({ error: 'Could not fetch leads' }, { status: 500 });
+  }
+}
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));

@@ -46,7 +46,10 @@ export default async function AdminPage() {
             <h1>Admin — All Inquiries 🐄</h1>
             <p>Logged in as {user.email}. Showing all submitted inquiries.</p>
           </div>
-          <Link href="/dashboard" className="btn btn--ghost">My Dashboard</Link>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <Link href="/admin/leads" className="btn btn--ghost">View Leads</Link>
+            <Link href="/dashboard" className="btn btn--ghost">My Dashboard</Link>
+          </div>
         </div>
 
         {/* Stats row */}

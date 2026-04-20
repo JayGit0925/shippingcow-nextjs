@@ -195,6 +195,10 @@ export async function updateLead(
   return rows[0]
 }
 
+export async function getAllLeads(): Promise<Lead[]> {
+  return sql<Lead[]>`SELECT * FROM leads ORDER BY created_at DESC`
+}
+
 // ============ Calculator session helpers ============
 
 export type CalculatorSession = {
