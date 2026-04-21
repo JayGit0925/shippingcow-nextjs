@@ -13,7 +13,7 @@ import {
 } from '@/lib/db';
 import { CHAT_SYSTEM_PROMPT } from '@/lib/constants';
 import { retrieveChunks, buildKbContext } from '@/lib/chat-kb';
-import { sendSlackHandoff } from '@/lib/slack';
+import { sendLeadNotification } from '@/lib/notify';
 import type { QualifyResult } from '@/lib/types';
 
 const messageSchema = z.object({
@@ -181,7 +181,7 @@ async function maybeSlackHandoff(params: {
 }) {
   if (params.slack_notified_at) return; // Already pinged
   try {
-    const ok = await sendSlackHandoff({
+    const ok = await sendLeadNotification({
       session_id:      params.session_id,
       page_url:        params.page_url,
       email:           params.email,
@@ -233,7 +233,7 @@ export async function PATCH(req: Request) {
     const session = await getChatSession(session_id);
     if (!session?.slack_notified_at) {
       const recentMsgs = messages ?? await getRecentChatMessages(session_id, 5);
-      await sendSlackHandoff({
+      await sendLeadNotification({
         session_id,
         page_url: page_url ?? '',
         email,
