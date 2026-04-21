@@ -132,6 +132,12 @@ export async function POST(req: Request) {
       }
     }
 
+    // Server-side capture_ready override — Haiku doesn't know message count
+    const msgCount = currentSession?.message_count ?? 0;
+    if (msgCount >= 2 || qualify.score >= 70) {
+      qualify.capture_ready = true;
+    }
+
     // Persist messages + update session (non-blocking)
     if (session_id && lastUserMsg) {
       Promise.all([
