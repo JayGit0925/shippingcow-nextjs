@@ -1,51 +1,94 @@
-import { sql } from '../lib/db';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as XLSX from 'xlsx';
+import postgres from 'postgres';
+
+// Load DATABASE_URL from .env.local
+const envPath = path.join(__dirname, '../.env.local');
+let DATABASE_URL = '';
+
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const match = trimmed.match(/^DATABASE_URL\s*=\s*(.+)$/);
+      if (match) {
+        DATABASE_URL = match[1].trim().replace(/^["']|["']$/g, '');
+      }
+    }
+  });
+}
+
+if (!DATABASE_URL) {
+  console.error('❌ DATABASE_URL not found in .env.local');
+  process.exit(1);
+}
+
+console.log(`✅ Database URL loaded: ${DATABASE_URL.substring(0, 50)}...`);
+
+const sql = postgres(DATABASE_URL, {
+  ssl: 'require',
+  prepare: false,
+  max: 10,
+});
 
 const BATCH_SIZE = 1000;
-const CSV_PATH = path.join(__dirname, 'simplemaps_uszips_basicv1.91.csv');
+const SCRIPT_DIR = __dirname;
 
 async function seedZips(): Promise<void> {
   try {
-    // Check if CSV exists
-    if (!fs.existsSync(CSV_PATH)) {
-      console.error('❌ CSV file not found at:', CSV_PATH);
+    // Find Excel file in scripts folder
+    const files = fs.readdirSync(SCRIPT_DIR);
+    const excelFile = files.find((f) => f.includes('simplemaps_uszips') && (f.endsWith('.xlsx') || f.endsWith('.xls')));
+
+    if (!excelFile) {
+      console.error('❌ Excel file not found in scripts folder');
       console.error('\n📥 Please download from: https://simplemaps.com/static/data/us-zips/1.91/basic/simplemaps_uszips_basicv1.91.zip');
-      console.error('📦 Extract and place the CSV file at:', CSV_PATH);
+      console.error('📦 Extract the ZIP and place the Excel file in:', SCRIPT_DIR);
+      console.error('   (It should be named something like simplemaps_uszips_basicv1.91.xlsx)');
       process.exit(1);
     }
 
-    // Parse CSV
-    console.log(`📄 Parsing CSV file...`);
-    const data = fs.readFileSync(CSV_PATH, 'utf-8');
-    const lines = data.split('\n').filter((line) => line.trim());
-    const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
+    const excelPath = path.join(SCRIPT_DIR, excelFile);
+    console.log(`📄 Reading Excel file: ${excelFile}...`);
+
+    const workbook = XLSX.readFile(excelPath);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+
+    if (rows.length === 0) {
+      throw new Error('Excel file is empty or cannot be read');
+    }
+
+    // Normalize header names
+    const firstRow = rows[0] as Record<string, any>;
+    const headers = Object.keys(firstRow).map((h) => h.toLowerCase());
 
     // Find column indices
-    const zipIdx = header.findIndex((h) => h.includes('zip'));
-    const latIdx = header.findIndex((h) => h.includes('lat'));
-    const lngIdx = header.findIndex((h) => h.includes('lng') || h.includes('long'));
-    const cityIdx = header.findIndex((h) => h.includes('city'));
-    const stateIdx = header.findIndex((h) => h.includes('state'));
+    const zipKey = headers.find((h) => h.includes('zip')) || Object.keys(firstRow)[0];
+    const latKey = headers.find((h) => h.includes('lat')) || Object.keys(firstRow)[1];
+    const lngKey = headers.find((h) => h.includes('lng') || h.includes('long')) || Object.keys(firstRow)[2];
+    const cityKey = headers.find((h) => h.includes('city')) || Object.keys(firstRow)[3];
+    const stateKey = headers.find((h) => h.includes('state')) || Object.keys(firstRow)[4];
 
-    if (zipIdx === -1 || latIdx === -1 || lngIdx === -1) {
-      throw new Error(`Missing required columns. Found: ${header.join(', ')}`);
+    if (!zipKey || !latKey || !lngKey) {
+      throw new Error(`Missing required columns. Found: ${Object.keys(firstRow).join(', ')}`);
     }
 
     // Parse rows and batch insert
-    console.log(`🔄 Seeding ${lines.length - 1} ZIP codes...`);
+    console.log(`🔄 Seeding ${rows.length} ZIP codes...`);
     let insertedCount = 0;
     let skippedCount = 0;
     let batch: Array<{zip: string, lat: number, lng: number, city: string | null, state: string | null}> = [];
 
-    for (let i = 1; i < lines.length; i++) {
-      const parts = lines[i].split(',').map((p) => p.trim().replace(/^"(.+)"$/, '$1'));
-
-      const zip = parts[zipIdx];
-      const lat = parseFloat(parts[latIdx]);
-      const lng = parseFloat(parts[lngIdx]);
-      const city = parts[cityIdx] || null;
-      const state = parts[stateIdx] || null;
+    for (const row of rows) {
+      const r = row as Record<string, unknown>;
+      const zip = String(r[zipKey]).trim();
+      const lat = parseFloat(String(r[latKey]));
+      const lng = parseFloat(String(r[lngKey]));
+      const city = r[cityKey] ? String(r[cityKey]).trim() : null;
+      const state = r[stateKey] ? String(r[stateKey]).trim() : null;
 
       if (!zip || isNaN(lat) || isNaN(lng)) {
         skippedCount++;

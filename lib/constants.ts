@@ -173,6 +173,20 @@ Key rules:
 - Keep responses under 150 words unless a detailed breakdown is truly needed
 - Be direct and helpful — no filler, no corporate fluff`
 
+// ============ Zone Rate Multipliers ============
+// Published carrier (FedEx/UPS) rates increase significantly by zone.
+// These multipliers represent the zone premium customers pay with standard carriers
+// relative to ShippingCow's flat contracted rates (which already reflect zone-skip routing).
+export const ZONE_RATE_MULTIPLIER: Record<number, number> = {
+  2: 1.00,
+  3: 1.20,
+  4: 1.42,
+  5: 1.65,
+  6: 1.88,
+  7: 2.05,
+  8: 2.20,
+}
+
 // ============ Last-Mile Shipping Rates (Actual Rate Card) ============
 // ShippingCow contracted rates by billable weight and carrier
 

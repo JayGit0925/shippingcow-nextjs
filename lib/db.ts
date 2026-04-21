@@ -148,6 +148,7 @@ export type Lead = {
   savings_estimate: Record<string, unknown> | null
   source_url: string | null
   status: LeadStatus
+  followup_sent_at: string | null
 }
 
 export async function createLead(params: {
@@ -197,6 +198,24 @@ export async function updateLead(
 
 export async function getAllLeads(): Promise<Lead[]> {
   return sql<Lead[]>`SELECT * FROM leads ORDER BY created_at DESC`
+}
+
+export async function getStaleNewLeads(): Promise<Lead[]> {
+  return sql<Lead[]>`
+    SELECT * FROM leads
+    WHERE status = 'new'
+      AND created_at < NOW() - INTERVAL '48 hours'
+      AND followup_sent_at IS NULL
+    ORDER BY created_at ASC
+  `
+}
+
+export async function markLeadFollowupSent(id: string): Promise<void> {
+  await sql`
+    UPDATE leads
+    SET status = 'contacted', followup_sent_at = NOW()
+    WHERE id = ${id}
+  `
 }
 
 // ============ Calculator session helpers ============
@@ -298,6 +317,120 @@ export async function getPasswordResetToken(tokenHash: string): Promise<Password
 
 export async function markPasswordResetTokenUsed(id: number): Promise<void> {
   await sql`UPDATE password_reset_tokens SET used = true WHERE id = ${id}`;
+}
+
+// ============ Chat session helpers (v2) ============
+
+export type ChatSessionRow = {
+  session_id: string
+  first_seen: string
+  last_seen: string
+  page_count: number
+  opener_variant: string | null
+  email: string | null
+  qualified_score: number
+  lead_id: string | null
+  slack_notified_at: string | null
+  follow_up_sent_at: string | null
+  message_count: number
+  calculator_context: Record<string, unknown> | null
+}
+
+export async function upsertChatSession(params: {
+  session_id: string
+  opener_variant?: string
+  calculator_context?: Record<string, unknown>
+}): Promise<void> {
+  await sql`
+    INSERT INTO chat_sessions (session_id, opener_variant, calculator_context)
+    VALUES (
+      ${params.session_id},
+      ${params.opener_variant ?? null},
+      ${params.calculator_context ? sql.json(asJson(params.calculator_context)) : null}
+    )
+    ON CONFLICT (session_id) DO UPDATE SET
+      last_seen = NOW(),
+      page_count = chat_sessions.page_count + 1,
+      opener_variant = COALESCE(chat_sessions.opener_variant, EXCLUDED.opener_variant),
+      calculator_context = COALESCE(EXCLUDED.calculator_context, chat_sessions.calculator_context)
+  `
+}
+
+export async function incrementSessionMessageCount(session_id: string): Promise<number> {
+  const rows = await sql<{ message_count: number }[]>`
+    UPDATE chat_sessions
+    SET message_count = message_count + 1, last_seen = NOW()
+    WHERE session_id = ${session_id}
+    RETURNING message_count
+  `
+  return rows[0]?.message_count ?? 0
+}
+
+export async function updateSessionQualification(params: {
+  session_id: string
+  qualified_score: number
+  email?: string
+}): Promise<void> {
+  await sql`
+    UPDATE chat_sessions
+    SET
+      qualified_score = GREATEST(qualified_score, ${params.qualified_score}),
+      email = COALESCE(${params.email ?? null}, email)
+    WHERE session_id = ${params.session_id}
+  `
+}
+
+export async function markSessionSlackNotified(session_id: string): Promise<void> {
+  await sql`
+    UPDATE chat_sessions SET slack_notified_at = NOW()
+    WHERE session_id = ${session_id}
+  `
+}
+
+export async function getChatSession(session_id: string): Promise<ChatSessionRow | undefined> {
+  const rows = await sql<ChatSessionRow[]>`
+    SELECT * FROM chat_sessions WHERE session_id = ${session_id} LIMIT 1
+  `
+  return rows[0]
+}
+
+export async function getChatSessionByEmail(email: string): Promise<ChatSessionRow | undefined> {
+  const rows = await sql<ChatSessionRow[]>`
+    SELECT * FROM chat_sessions
+    WHERE email = ${email.toLowerCase()}
+    ORDER BY last_seen DESC LIMIT 1
+  `
+  return rows[0]
+}
+
+export async function getRecentChatMessages(session_id: string, limit = 20): Promise<{ role: string; content: string; created_at: string }[]> {
+  return sql<{ role: string; content: string; created_at: string }[]>`
+    SELECT role, content, created_at FROM chat_messages
+    WHERE session_id = ${session_id}
+    ORDER BY created_at ASC LIMIT ${limit}
+  `
+}
+
+export async function logChatEvent(params: {
+  session_id: string
+  event_type: string
+  metadata?: Record<string, unknown>
+}): Promise<void> {
+  await sql`
+    INSERT INTO chat_events (session_id, event_type, metadata)
+    VALUES (
+      ${params.session_id},
+      ${params.event_type},
+      ${params.metadata ? sql.json(asJson(params.metadata)) : null}
+    )
+  `
+}
+
+export async function getAllChatSessions(limit = 50): Promise<ChatSessionRow[]> {
+  return sql<ChatSessionRow[]>`
+    SELECT * FROM chat_sessions
+    ORDER BY last_seen DESC LIMIT ${limit}
+  `
 }
 
 // ============ ZIP coordinate helpers ============

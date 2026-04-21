@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { href: '/dashboard',           label: 'Overview',   icon: '◈' },
   { href: '/dashboard/shipments', label: 'Shipments',  icon: '📦' },
   { href: '/dashboard/copilot',   label: 'AI Copilot', icon: '✦' },
+  { href: '/dashboard/chat',      label: 'Chat Leads', icon: '💬' },
   { href: '/dashboard/settings',  label: 'Settings',   icon: '⚙' },
 ];
 

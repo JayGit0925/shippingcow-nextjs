@@ -85,3 +85,44 @@ export type InquiryPayload = {
   product_weight?: string;
   message?: string;
 };
+
+// --- Chat v2 ------------------------------------------------------
+
+export type ChatSession = {
+  session_id: string;
+  first_seen: string;
+  last_seen: string;
+  page_count: number;
+  opener_variant: string | null;
+  email: string | null;
+  qualified_score: number;
+  lead_id: string | null;
+  slack_notified_at: string | null;
+  follow_up_sent_at: string | null;
+  message_count: number;
+  calculator_context: Record<string, unknown> | null;
+};
+
+export type ChatEvent = {
+  id: string;
+  created_at: string;
+  session_id: string;
+  event_type: ChatEventType;
+  metadata: Record<string, unknown> | null;
+};
+
+export type ChatEventType =
+  | 'widget_opened'
+  | 'widget_auto_opened'
+  | 'first_message'
+  | 'email_captured'
+  | 'qualified'
+  | 'handoff_slack'
+  | 'session_end';
+
+export type QualifyResult = {
+  score: number;        // 0–100
+  intent: string;       // "pricing" | "support" | "browsing" | "ready_to_buy"
+  capture_ready: boolean;
+  needs_human: boolean;
+};
