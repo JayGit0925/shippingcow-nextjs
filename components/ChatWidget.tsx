@@ -107,7 +107,9 @@ export default function ChatWidget() {
   const [captureMode, setCaptureMode]     = useState(false);
   const [emailInput, setEmailInput]       = useState('');
   const [emailError, setEmailError]       = useState('');
-  const [emailCaptured, setEmailCaptured] = useState(false);
+  const [emailCaptured, setEmailCaptured] = useState(() => {
+    try { return localStorage.getItem('sc_email_captured') === '1'; } catch { return false; }
+  });
   const [userMsgCount, setUserMsgCount]   = useState(0);
   const [sessionId, setSessionId]   = useState<string>('');
   const [calcContext, setCalcContext] = useState<Record<string, unknown> | null>(null);
@@ -231,8 +233,8 @@ export default function ChatWidget() {
       const updatedMessages = [...next, reply];
       setMessages(updatedMessages);
 
-      // Trigger email capture: client-side count (reliable) OR API signal (high ICP score)
-      if (!emailCaptured && !captureMode && (newCount >= 3 || data.capture_ready)) {
+      // Trigger email capture: after 2nd user message OR high ICP score from API
+      if (!emailCaptured && !captureMode && (newCount >= 2 || data.capture_ready)) {
         setTimeout(() => setCaptureMode(true), 800);
       }
     } catch {
@@ -264,6 +266,7 @@ export default function ChatWidget() {
 
       setEmailCaptured(true);
       setCaptureMode(false);
+      try { localStorage.setItem('sc_email_captured', '1'); } catch {}
       fireEvent('email_captured', { email: emailInput });
 
       setMessages((prev) => [
