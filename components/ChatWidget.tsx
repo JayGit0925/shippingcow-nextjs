@@ -108,6 +108,7 @@ export default function ChatWidget() {
   const [emailInput, setEmailInput]       = useState('');
   const [emailError, setEmailError]       = useState('');
   const [emailCaptured, setEmailCaptured] = useState(false);
+  const [userMsgCount, setUserMsgCount]   = useState(0);
   const [sessionId, setSessionId]   = useState<string>('');
   const [calcContext, setCalcContext] = useState<Record<string, unknown> | null>(null);
   const [isMobile, setIsMobile]     = useState(false);
@@ -204,6 +205,8 @@ export default function ChatWidget() {
     setMessages(next);
     setInput('');
     setLoading(true);
+    const newCount = userMsgCount + 1;
+    setUserMsgCount(newCount);
 
     try {
       const res = await fetch('/api/chat', {
@@ -228,8 +231,8 @@ export default function ChatWidget() {
       const updatedMessages = [...next, reply];
       setMessages(updatedMessages);
 
-      // Trigger email capture if API signals ready
-      if (data.capture_ready && !emailCaptured && !captureMode) {
+      // Trigger email capture: client-side count (reliable) OR API signal (high ICP score)
+      if (!emailCaptured && !captureMode && (newCount >= 3 || data.capture_ready)) {
         setTimeout(() => setCaptureMode(true), 800);
       }
     } catch {
@@ -237,7 +240,7 @@ export default function ChatWidget() {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages, sessionId, calcContext, emailCaptured, captureMode]);
+  }, [input, loading, messages, sessionId, calcContext, emailCaptured, captureMode, userMsgCount]);
 
   async function submitEmail(e: FormEvent) {
     e.preventDefault();
