@@ -51,6 +51,32 @@ export async function PATCH(
       savings_estimate: parsed.data.savings_estimate as Record<string, unknown> | undefined,
       status:          parsed.data.status,
     });
+
+    if (parsed.data.step_completed === 4 && process.env.N8N_WEBHOOK_URL) {
+      const s1 = lead.step1_data as Record<string, unknown> | null;
+      const s2 = lead.step2_data as Record<string, unknown> | null;
+      const s3 = lead.step3_data as Record<string, unknown> | null;
+      fetch(process.env.N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lead_id:          lead.id,
+          email:            parsed.data.step4_data?.email ?? null,
+          phone:            parsed.data.step4_data?.phone ?? null,
+          company:          s2?.company_name ?? null,
+          shopify_url:      s2?.shopify_url ?? null,
+          monthly_orders:   s2?.monthly_orders ?? null,
+          skus:             s3?.skus ?? [],
+          origin_zip:       s3?.origin_zip ?? null,
+          product_category: s1?.product_category ?? null,
+          monthly_spend:    s1?.monthly_spend ?? null,
+          savings_estimate: lead.savings_estimate ?? null,
+          source:           'inquiry_funnel',
+          submitted_at:     new Date().toISOString(),
+        }),
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ id: lead.id });
   } catch (err) {
     console.error('[leads PATCH]', err);
