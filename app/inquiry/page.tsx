@@ -68,6 +68,7 @@ function InquiryInner() {
   const [busy, setBusy]     = useState(false);
   const [err, setErr]       = useState<string | null>(null);
   const [done, setDone]     = useState(false);
+  const [auditSummary, setAuditSummary] = useState<{annual_savings: number, warehouse_distribution?: Record<string, number>} | null>(null);
 
   // Step 1
   const [spend,    setSpend]    = useState('');
@@ -95,6 +96,24 @@ function InquiryInner() {
   const [email,       setEmail]       = useState('');
   const [phone,       setPhone]       = useState('');
   const [frustration, setFrustration] = useState('');
+
+  // Fetch audit summary if audit_id in URL
+  useEffect(() => {
+    const auditId = searchParams.get('audit_id');
+    if (auditId) {
+      fetch(`/api/audit?id=${encodeURIComponent(auditId)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.report_data) {
+            setAuditSummary({
+              annual_savings: data.report_data.total_savings * 12,
+              warehouse_distribution: data.report_data.warehouse_distribution,
+            });
+          }
+        })
+        .catch(() => {}); // Silently fail if audit not found
+    }
+  }, [searchParams]);
 
   // Live savings preview (step 3)
   const [savingsPerPkg, setSavingsPerPkg] = useState(0);
@@ -222,6 +241,19 @@ function InquiryInner() {
 
   return (
     <div className="form-page">
+      {auditSummary && (
+        <div style={{ background: 'var(--yellow)', border: '3px solid var(--dark)', padding: '1.5rem', marginBottom: '1.5rem', boxShadow: 'var(--shadow-pixel)' }}>
+          <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.7rem', color: 'var(--blue)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+            Based on your audit
+          </div>
+          <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>
+            You could save <span style={{ color: 'var(--blue)' }}>${(auditSummary.annual_savings).toLocaleString('en-US', {minimumFractionDigits: 0})}/year</span>
+          </div>
+          <div style={{ fontSize: '0.95rem', color: '#3a4454', marginTop: '0.5rem' }}>
+            Complete your profile below and we'll send you a detailed breakdown within 1 business day.
+          </div>
+        </div>
+      )}
       <div className="form-card form-card--wide">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
           <h1 style={{ margin: 0 }}>Get Your Free Audit</h1>
