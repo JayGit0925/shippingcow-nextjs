@@ -8,6 +8,7 @@ import {
   DIM_DIVISOR_3PL,
   DIM_DIVISOR_SHIPPINGCOW,
   ESTIMATED_COST_PER_LB,
+  FUEL_SURCHARGE_RATE,
 } from '@/lib/constants';
 
 // ---- Math helpers ----
@@ -22,6 +23,8 @@ type Results = {
   dim139: number; dim166: number; dim225: number;
   bill139: number; bill166: number; bill225: number;
   savingsPerPkg: number;
+  fuelWaiverPerPkg: number;
+  totalSavingsPerPkg: number;
   annualSavings: number;
   pctSaved: number;
   lbsSaved: number;
@@ -37,8 +40,10 @@ function calcResults(l: number, w: number, h: number, weight: number, vol: numbe
   const lbsSaved = bill139 - bill225;
   const pctSaved = bill139 > 0 ? (lbsSaved / bill139) * 100 : 0;
   const savingsPerPkg = lbsSaved * ESTIMATED_COST_PER_LB;
-  const annualSavings = savingsPerPkg * vol * 12;
-  return { dim139, dim166, dim225, bill139, bill166, bill225, savingsPerPkg, annualSavings, pctSaved, lbsSaved };
+  const fuelWaiverPerPkg = savingsPerPkg * FUEL_SURCHARGE_RATE;
+  const totalSavingsPerPkg = savingsPerPkg + fuelWaiverPerPkg;
+  const annualSavings = totalSavingsPerPkg * vol * 12;
+  return { dim139, dim166, dim225, bill139, bill166, bill225, savingsPerPkg, fuelWaiverPerPkg, totalSavingsPerPkg, annualSavings, pctSaved, lbsSaved };
 }
 
 function fmt1(n: number) { return n.toFixed(1); }
@@ -224,7 +229,7 @@ export default function DimCalculator() {
 
           {/* Savings callout */}
           <div style={{ background: 'var(--yellow)', border: '4px solid var(--dark)', padding: '1.2rem', boxShadow: 'var(--shadow-pixel)', marginBottom: '1.5rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '0.9rem' }}>
               <div>
                 <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.6rem', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
                   Billable lbs saved vs UPS/FedEx
@@ -244,9 +249,23 @@ export default function DimCalculator() {
                   {fmtDollar(results.annualSavings)}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: '#3a4454' }}>
-                  {fmtDollar(results.savingsPerPkg)} per package × {volume.toLocaleString()} mo × 12
+                  {fmtDollar(results.totalSavingsPerPkg)} per pkg × {volume.toLocaleString()} mo × 12
                 </div>
               </div>
+            </div>
+            {/* Fuel waiver breakdown */}
+            <div style={{ borderTop: '2px solid rgba(26,32,44,0.2)', paddingTop: '0.75rem', display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.8rem' }}>
+              <span>
+                <strong>DIM savings:</strong> {fmtDollar(results.savingsPerPkg)}/pkg
+              </span>
+              <span style={{ color: '#1a202c' }}>+</span>
+              <span>
+                <strong>Fuel waiver ({(FUEL_SURCHARGE_RATE * 100).toFixed(0)}%):</strong> {fmtDollar(results.fuelWaiverPerPkg)}/pkg
+              </span>
+              <span style={{ color: '#1a202c' }}>→</span>
+              <span>
+                <strong>Total: {fmtDollar(results.totalSavingsPerPkg)}/pkg</strong>
+              </span>
             </div>
           </div>
 
@@ -288,7 +307,7 @@ export default function DimCalculator() {
           </div>
 
           <p style={{ fontSize: '0.72rem', color: '#6b7280', marginTop: '0.75rem' }}>
-            * Savings estimate uses ${ESTIMATED_COST_PER_LB}/lb blended rate. Actual savings vary by carrier, zone, and negotiated rates.
+            * DIM savings use ${ESTIMATED_COST_PER_LB}/lb blended rate. Fuel waiver calculated at {(FUEL_SURCHARGE_RATE * 100).toFixed(0)}% of base charge (current FedEx surcharge). Actual savings vary by carrier, zone, and negotiated rates.
           </p>
         </div>
       </div>

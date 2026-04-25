@@ -13,6 +13,10 @@ export const DIM_DIVISOR_SHIPPINGCOW = 225  // ShippingCow advantage
 // TODO: update with real blended rate data from carrier contracts
 export const ESTIMATED_COST_PER_LB = 0.45
 
+// FedEx fuel surcharge rate — applied as % of base shipping charge
+// ShippingCow contract includes a fuel surcharge waiver at this rate
+export const FUEL_SURCHARGE_RATE = 0.27
+
 // ============ Pricing Tiers ============
 
 export type PricingTier = {
