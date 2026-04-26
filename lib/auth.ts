@@ -60,6 +60,13 @@ export async function getCurrentUser(): Promise<User | null> {
   return (await getUserById(userId)) ?? null;
 }
 
+/** Check if a user is the admin (case-insensitive email match against ADMIN_EMAIL env var) */
+export function isAdmin(user: { email: string } | null | undefined): boolean {
+  if (!user) return false;
+  const admin = (process.env.ADMIN_EMAIL ?? '').toLowerCase();
+  return admin.length > 0 && user.email.toLowerCase() === admin;
+}
+
 /** Strip sensitive fields before sending a user to the client */
 export function publicUser(user: User) {
   return {

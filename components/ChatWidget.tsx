@@ -6,11 +6,16 @@ import type { Message } from '@/lib/types';
 
 // ─── Session storage ────────────────────────────────────────────────────────
 
+const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
 function getOrCreateSessionId(): string {
+  const created = Number(localStorage.getItem('sc_session_created') ?? 0);
   let sid = localStorage.getItem('sc_session_id');
-  if (!sid) {
+  if (!sid || Date.now() - created > SESSION_TTL_MS) {
     sid = crypto.randomUUID();
     localStorage.setItem('sc_session_id', sid);
+    localStorage.setItem('sc_session_created', String(Date.now()));
+    localStorage.removeItem('sc_email_captured');
   }
   return sid;
 }
@@ -110,6 +115,8 @@ export default function ChatWidget() {
   const [emailCaptured, setEmailCaptured] = useState(() => {
     try { return localStorage.getItem('sc_email_captured') === '1'; } catch { return false; }
   });
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
+  const [rateLimited, setRateLimited]     = useState(false);
   const [userMsgCount, setUserMsgCount]   = useState(0);
   const [sessionId, setSessionId]   = useState<string>('');
   const [calcContext, setCalcContext] = useState<Record<string, unknown> | null>(null);
@@ -197,6 +204,24 @@ export default function ChatWidget() {
     setDismissed();
   }
 
+  function resetSession() {
+    try {
+      localStorage.removeItem('sc_session_id');
+      localStorage.removeItem('sc_session_created');
+      localStorage.removeItem('sc_email_captured');
+      localStorage.removeItem('sc_widget_dismissed_until');
+    } catch {}
+    const newSid = crypto.randomUUID();
+    localStorage.setItem('sc_session_id', newSid);
+    localStorage.setItem('sc_session_created', String(Date.now()));
+    setSessionId(newSid);
+    setMessages([]);
+    setRateLimited(false);
+    setEmailCaptured(false);
+    setCaptureMode(false);
+    setUserMsgCount(0);
+  }
+
   const send = useCallback(async (e?: FormEvent) => {
     e?.preventDefault();
     const text = input.trim();
@@ -233,6 +258,11 @@ export default function ChatWidget() {
       const updatedMessages = [...next, reply];
       setMessages(updatedMessages);
 
+      if (data.rate_limited) {
+        setRateLimited(true);
+        return;
+      }
+
       // Trigger email capture: after 2nd user message OR high ICP score from API
       if (!emailCaptured && !captureMode && (newCount >= 2 || data.capture_ready)) {
         setTimeout(() => setCaptureMode(true), 800);
@@ -246,12 +276,14 @@ export default function ChatWidget() {
 
   async function submitEmail(e: FormEvent) {
     e.preventDefault();
+    if (emailSubmitting) return;
     setEmailError('');
     if (!isValidEmail(emailInput)) {
       setEmailError('Please enter a valid email address.');
       return;
     }
 
+    setEmailSubmitting(true);
     try {
       await fetch('/api/chat', {
         method: 'PATCH',
@@ -278,6 +310,8 @@ export default function ChatWidget() {
       ]);
     } catch {
       setEmailError('Could not save your email. Please try again.');
+    } finally {
+      setEmailSubmitting(false);
     }
   }
 
@@ -291,7 +325,7 @@ export default function ChatWidget() {
 
   const panelPosition = isMobile
     ? { bottom: '4.5rem', right: '0.5rem', left: '0.5rem', width: 'auto' }
-    : { bottom: '5rem', right: '1.5rem', width: 360 };
+    : { bottom: '5rem', right: '1.5rem', width: 'min(360px, calc(100vw - 1rem))' };
 
   return (
     <>
@@ -374,8 +408,20 @@ export default function ChatWidget() {
               </div>
             )}
 
+            {/* Rate limit — start fresh */}
+            {rateLimited && (
+              <div style={{ alignSelf: 'flex-start', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 8, padding: '10px 12px', maxWidth: '90%' }}>
+                <button
+                  onClick={resetSession}
+                  style={{ background: '#0052C9', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}
+                >
+                  Start a fresh chat
+                </button>
+              </div>
+            )}
+
             {/* Email capture prompt */}
-            {captureMode && !emailCaptured && (
+            {captureMode && !emailCaptured && !rateLimited && (
               <div style={{ alignSelf: 'flex-start', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '10px 12px', maxWidth: '90%' }}>
                 <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#1E3A8A', fontWeight: 600 }}>
                   Want me to send you a custom savings estimate?
@@ -392,9 +438,10 @@ export default function ChatWidget() {
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button
                       type="submit"
-                      style={{ flex: 1, background: '#1E40AF', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 0', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}
+                      disabled={emailSubmitting}
+                      style={{ flex: 1, background: emailSubmitting ? '#6B7280' : '#1E40AF', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 0', fontWeight: 700, cursor: emailSubmitting ? 'not-allowed' : 'pointer', fontSize: '0.8rem' }}
                     >
-                      Send it
+                      {emailSubmitting ? 'Mooooving...' : 'Send it'}
                     </button>
                     <button
                       type="button"
@@ -421,8 +468,8 @@ export default function ChatWidget() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about shipping costs…"
-              disabled={loading}
+              placeholder={rateLimited ? 'Start a fresh chat above' : 'Ask about shipping costs…'}
+              disabled={loading || rateLimited}
               style={{
                 flex: 1,
                 border: '2px solid #D1D5DB',

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isAdmin } from '@/lib/auth';
 import { getAllInquiries } from '@/lib/db';
 
 type InquiryRow = {
@@ -28,10 +28,7 @@ export default async function AdminPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail || user.email !== adminEmail) {
-    redirect('/dashboard');
-  }
+  if (!isAdmin(user)) redirect('/dashboard');
 
   const inquiries = (await getAllInquiries()) as unknown as InquiryRow[];
   const total = inquiries.length;
@@ -48,6 +45,7 @@ export default async function AdminPage() {
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <Link href="/admin/leads" className="btn btn--ghost">View Leads</Link>
+            <Link href="/admin/chat-leads" className="btn btn--ghost">Chat Leads</Link>
             <Link href="/dashboard" className="btn btn--ghost">My Dashboard</Link>
           </div>
         </div>

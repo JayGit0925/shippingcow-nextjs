@@ -7,8 +7,11 @@ import {
   HANDLING_DIM_DIVISOR,
   HANDLING_TIERS,
   HANDLING_HEAVY_PER_LB,
+  ZONE_RATE_MULTIPLIER,
+  PALLET_MAX_VOLUME_CBM,
+  LTL_COST_PER_MILE,
 } from './constants';
-import { estimateZone, smartRoute } from './zone';
+import { estimateZone, smartRoute, findClosestWarehouseToOrigin } from './zone';
 
 /**
  * Get the shipping rate for a given billable weight
@@ -26,17 +29,17 @@ export function getShippingRate(billable_weight: number): {
 
   if (weight <= 20) {
     const rate = GOFO_RATES[weight];
-    return { carrier: 'GoFo', rate: rate || GOFO_RATES[20] };
+    return { carrier: 'GoFo', rate: rate ?? GOFO_RATES[20] };
   }
 
   if (weight <= 49) {
     const rate = FEDEX_RATES[weight];
-    return { carrier: 'FedEx', rate: rate || FEDEX_RATES[49] };
+    return { carrier: 'FedEx', rate: rate ?? FEDEX_RATES[49] };
   }
 
   if (weight <= 149) {
     const rate = FEDEX_HEAVY_RATES[weight];
-    return { carrier: 'FedEx Heavy', rate: rate || FEDEX_HEAVY_RATES[149] };
+    return { carrier: 'FedEx Heavy', rate: rate ?? FEDEX_HEAVY_RATES[149] };
   }
 
   // Above 149 lbs, cap at the 149 lb rate
@@ -94,12 +97,15 @@ export type ShipmentAnalysis = {
   current_billable_139: number;
   current_cost: number;
 
-  // ShippingCow state (best warehouse, DIM 225)
+  // ShippingCow state (warehouse closest to origin → destination, DIM 225)
   sc_warehouse: string;
   sc_zone: number;
   sc_distance: number;
   sc_billable_225: number;
-  sc_cost: number; // includes handling + shipping
+  sc_cost: number; // inbound + outbound + handling
+  inbound_warehouse_distance: number;
+  units_per_pallet: number;
+  inbound_cost_per_unit: number;
 
   // Savings
   savings_per_package: number;
@@ -133,16 +139,29 @@ export async function analyzeShipment(row: {
     DIM_DIVISOR_STANDARD
   );
 
-  // Current cost using real rate card (standard carrier rates)
+  // Current cost: use customer-provided actual cost if available,
+  // otherwise estimate from rate card scaled by zone multiplier (published carrier
+  // rates are significantly higher at zone 5-8 than SC contracted flat rates).
   const currentShippingRate = getShippingRate(current_billable_139);
   const currentHandlingFee = getHandlingFee(row.length, row.width, row.height, row.weight);
-  const current_cost = currentShippingRate.rate + currentHandlingFee;
+  const zoneMultiplier = ZONE_RATE_MULTIPLIER[currentZoneData.zone] ?? 2.20;
+  const current_cost =
+    row.current_cost != null
+      ? row.current_cost
+      : currentShippingRate.rate * zoneMultiplier + currentHandlingFee;
 
-  // Estimate ShippingCow state (best warehouse → destination, DIM 225)
+  // Outbound: best SC warehouse → destination (minimizes zone for each order)
   const routing = await smartRoute(row.dest_zip);
-
   const sc_zone = routing.zone;
   const sc_distance = routing.distance_miles;
+
+  // Inbound: closest SC warehouse to origin (minimizes LTL cost to receive inventory)
+  const inboundWh = await findClosestWarehouseToOrigin(row.origin_zip);
+
+  // Inbound pallet cost amortized per unit
+  const product_cbm = (row.length * row.width * row.height) / 61_023.7;
+  const units_per_pallet = Math.max(1, Math.floor(PALLET_MAX_VOLUME_CBM / product_cbm));
+  const inbound_cost_per_unit = (inboundWh.inbound_distance_miles * LTL_COST_PER_MILE) / units_per_pallet;
 
   const sc_billable_225 = calculateBillableWeight(
     row.length,
@@ -152,10 +171,10 @@ export async function analyzeShipment(row: {
     DIM_DIVISOR_SHIPPINGCOW
   );
 
-  // ShippingCow cost using real rate card
+  // ShippingCow cost: inbound + outbound last-mile + handling
   const shippingRate = getShippingRate(sc_billable_225);
   const handlingFee = getHandlingFee(row.length, row.width, row.height, row.weight);
-  const sc_cost = shippingRate.rate + handlingFee;
+  const sc_cost = inbound_cost_per_unit + shippingRate.rate + handlingFee;
 
   const savings_per_package = current_cost - sc_cost;
   const zone_improvement = currentZoneData.zone - sc_zone;
@@ -171,6 +190,9 @@ export async function analyzeShipment(row: {
     sc_distance,
     sc_billable_225,
     sc_cost,
+    inbound_warehouse_distance: inboundWh.inbound_distance_miles,
+    units_per_pallet,
+    inbound_cost_per_unit,
 
     savings_per_package,
     zone_improvement,

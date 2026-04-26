@@ -15,7 +15,7 @@ const shipmentSchema = z.object({
 });
 
 const bodySchema = z.object({
-  shipments: z.array(shipmentSchema).min(1).max(5000),
+  shipments: z.array(shipmentSchema).min(1).max(1000),
 });
 
 export type AuditRequest = z.infer<typeof bodySchema>;
@@ -34,6 +34,7 @@ export type AuditReport = {
   // Cost summary
   total_current_cost: number;
   total_sc_cost: number;
+  total_inbound_fees: number;
   total_handling_fees: number;
   total_last_mile_fees: number;
   total_savings: number;
@@ -145,6 +146,7 @@ export async function POST(req: Request) {
     const sc_zone_distribution: Record<number, number> = {};
     let total_current_cost = 0;
     let total_sc_cost = 0;
+    let total_inbound_fees = 0;
     let total_handling_fees = 0;
     let total_last_mile_fees = 0;
     let shipments_zone_improved = 0;
@@ -162,12 +164,12 @@ export async function POST(req: Request) {
       total_current_cost += detail.current_cost * qty;
       total_sc_cost += detail.sc_cost * qty;
 
-      // Break down SC cost into components for report
+      // Break down SC cost into components
       const handlingFee = getHandlingFee(detail.length, detail.width, detail.height, detail.weight);
+      const inboundFee = detail.inbound_cost_per_unit || 0;
+      total_inbound_fees += inboundFee * qty;
       total_handling_fees += handlingFee * qty;
-      // Shipping rate is included in sc_cost along with handling
-      const shippingOnly = detail.sc_cost - handlingFee;
-      total_last_mile_fees += shippingOnly * qty;
+      total_last_mile_fees += (detail.sc_cost - inboundFee - handlingFee) * qty;
 
       // Zone improvements
       if (detail.zone_improvement > 0) {
@@ -190,7 +192,7 @@ export async function POST(req: Request) {
         (sc_zone_distribution[detail.sc_zone] || 0) + qty;
 
       // Warehouse distribution
-      warehouse_distribution[detail.sc_warehouse]++;
+      warehouse_distribution[detail.sc_warehouse] = (warehouse_distribution[detail.sc_warehouse] ?? 0) + 1;
     }
 
     const total_savings = total_current_cost - total_sc_cost;
@@ -228,6 +230,7 @@ export async function POST(req: Request) {
 
       total_current_cost,
       total_sc_cost,
+      total_inbound_fees,
       total_handling_fees,
       total_last_mile_fees,
       total_savings,

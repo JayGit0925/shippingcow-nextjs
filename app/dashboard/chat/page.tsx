@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isAdmin } from '@/lib/auth';
 import { getAllChatSessions } from '@/lib/db';
 import type { ChatSessionRow } from '@/lib/db';
 
@@ -22,6 +22,8 @@ function formatDate(iso: string) {
 export default async function ChatSessionsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
+
+  if (!isAdmin(user)) redirect('/dashboard');
 
   const sessions = await getAllChatSessions(100);
 

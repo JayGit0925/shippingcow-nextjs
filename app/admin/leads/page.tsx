@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isAdmin } from '@/lib/auth';
 import { getAllLeads, Lead } from '@/lib/db';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -14,10 +14,7 @@ export default async function AdminLeadsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail || user.email !== adminEmail) {
-    redirect('/dashboard');
-  }
+  if (!isAdmin(user)) redirect('/dashboard');
 
   const leads = await getAllLeads();
   const total = leads.length;

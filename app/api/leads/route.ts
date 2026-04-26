@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createLead, sql } from '@/lib/db';
+import { getCurrentUser, isAdmin } from '@/lib/auth';
 
 const bodySchema = z.object({
   monthly_spend:    z.string().min(1),
@@ -10,6 +11,11 @@ const bodySchema = z.object({
 });
 
 export async function GET() {
+  const user = await getCurrentUser();
+  if (!isAdmin(user)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const leads = await sql`SELECT * FROM leads ORDER BY created_at DESC LIMIT 100`;
     return NextResponse.json(leads);

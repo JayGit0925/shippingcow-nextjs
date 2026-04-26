@@ -116,7 +116,8 @@ export async function palletInboundCost(
     }
   }
 
-  const trucking_distance_miles = closestDistance;
+  // If all warehouse coord lookups failed, fall back to median US distance (matches lib/zone.ts)
+  const trucking_distance_miles = isFinite(closestDistance) ? closestDistance : 1200;
   const trucking_cost = trucking_distance_miles * LTL_COST_PER_MILE;
 
   // Units per pallet

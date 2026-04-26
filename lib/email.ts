@@ -103,6 +103,98 @@ export async function sendInquiryConfirmation(data: InquiryEmailData): Promise<
   }
 }
 
+export async function sendLeadFollowup(params: {
+  to: string;
+  name?: string;
+  annualSavings?: number;
+  siteUrl: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const client = getClient();
+  if (!client) return { ok: false, error: 'Email not configured' };
+
+  const displayName = params.name || 'there';
+  const savingsLine = params.annualSavings
+    ? `Based on your earlier calculation, you could save <strong>$${Math.round(params.annualSavings).toLocaleString()}/year</strong> with DIM 225 pricing and smart routing.`
+    : 'Based on your product dimensions, you may be significantly overpaying for shipping.';
+
+  try {
+    await client.emails.send({
+      from,
+      to: params.to,
+      subject: '🐄 Your ShippingCow savings analysis is ready',
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1A202C;">
+          <div style="background: #0052C9; color: #fff; padding: 24px; text-align: center; border: 4px solid #1A202C;">
+            <h1 style="margin: 0; font-size: 28px; letter-spacing: 0.02em;">SHIPPING COW</h1>
+            <p style="margin: 8px 0 0; color: #FEB81B;">Your savings analysis is waiting</p>
+          </div>
+          <div style="background: #fff; padding: 24px; border: 4px solid #1A202C; border-top: 0;">
+            <p>Hi ${escapeHtml(displayName)},</p>
+            <p>${savingsLine}</p>
+            <p>Upload your recent shipment invoices and we'll show you the exact breakdown — zone by zone, package by package.</p>
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${params.siteUrl}/audit" style="background: #0052C9; color: #fff; padding: 14px 28px; text-decoration: none; font-weight: 700; border: 3px solid #1A202C; display: inline-block;">
+                Run My Free Audit →
+              </a>
+            </div>
+            <p style="font-size: 13px; color: #666;">Takes 2 minutes. No signup required. Just drop in your data.</p>
+            <p style="margin-top: 32px;">— The Shipping Cow Team 🐄</p>
+          </div>
+        </div>
+      `,
+    });
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[email] lead followup send failed:', msg);
+    return { ok: false, error: msg };
+  }
+}
+
+export async function sendAuditReport(
+  to: string,
+  auditId: string,
+  annualSavings: number,
+  siteUrl: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const client = getClient();
+  if (!client) return { ok: false, error: 'Email not configured' };
+
+  const reportUrl = `${siteUrl}/audit?id=${auditId}`;
+  const savings = annualSavings.toLocaleString('en-US', { minimumFractionDigits: 0 });
+
+  try {
+    await client.emails.send({
+      from,
+      to,
+      subject: `🐄 Your ShippingCow Audit — $${savings}/yr in potential savings`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1A202C;">
+          <div style="background: #0052C9; color: #fff; padding: 24px; text-align: center; border: 4px solid #1A202C;">
+            <h1 style="margin: 0; font-size: 28px; letter-spacing: 0.02em;">SHIPPING COW</h1>
+            <p style="margin: 8px 0 0; color: #FEB81B;">Your shipment audit is ready</p>
+          </div>
+          <div style="background: #fff; padding: 24px; border: 4px solid #1A202C; border-top: 0;">
+            <p>Here's your full audit report showing <strong>$${savings}/year</strong> in potential savings.</p>
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${reportUrl}" style="background: #0052C9; color: #fff; padding: 14px 28px; text-decoration: none; font-weight: 700; border: 3px solid #1A202C; display: inline-block;">
+                View Full Report →
+              </a>
+            </div>
+            <p style="font-size: 13px; color: #666;">Want to talk through these numbers? Reply to this email and we'll set up a call.</p>
+            <p style="margin-top: 32px;">— The Shipping Cow Team 🐄</p>
+          </div>
+        </div>
+      `,
+    });
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[email] audit report send failed:', msg);
+    return { ok: false, error: msg };
+  }
+}
+
 export async function sendPasswordResetEmail(
   to: string,
   name: string,

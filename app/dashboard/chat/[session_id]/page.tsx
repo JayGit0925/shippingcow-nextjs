@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isAdmin } from '@/lib/auth';
 import { getChatSession, getRecentChatMessages } from '@/lib/db';
 
 function formatDate(iso: string) {
@@ -16,6 +16,8 @@ export default async function ChatTranscriptPage({
 }) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
+
+  if (!isAdmin(user)) redirect('/dashboard');
 
   const { session_id } = await params;
   const [session, messages] = await Promise.all([

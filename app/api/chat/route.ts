@@ -30,7 +30,7 @@ const bodySchema = z.object({
   calculator_context:   z.record(z.unknown()).optional(),
 });
 
-const RATE_LIMIT = 20;
+const RATE_LIMIT = 500;
 
 const QUALIFY_PROMPT = `You are an ICP scoring engine for a B2B logistics company.
 Score this user message for sales qualification. Reply with valid JSON only, no markdown.
@@ -57,9 +57,9 @@ export async function POST(req: Request) {
   const { messages, session_id, page_url, lead_id, opener_variant, calculator_context } = parsed.data;
   const lastUserMsg = messages.filter((m) => m.role === 'user').at(-1);
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json({
-      content: "Hi! I'm the ShippingCow AI 🐄 Chat isn't configured yet — add ANTHROPIC_API_KEY to enable me. In the meantime, submit an inquiry and our team will reach out within one business day.",
+      content: "Hi! I'm the ShippingCow AI 🐄 Chat isn't configured yet — add OPENROUTER_API_KEY to enable me. In the meantime, submit an inquiry and our team will reach out within one business day.",
     });
   }
 
@@ -77,7 +77,8 @@ export async function POST(req: Request) {
   // Rate limit check
   if (currentSession && currentSession.message_count >= RATE_LIMIT) {
     return NextResponse.json({
-      content: "You've reached the message limit for this session. Start a new session or email us at hello@shippingcow.ai to continue.",
+      content: "You've mooooved through 500 messages — that's a record! 🐄 Start a fresh chat below, or email us at hello@shippingcow.ai.",
+      rate_limited: true,
     });
   }
 
@@ -101,25 +102,40 @@ export async function POST(req: Request) {
     // Parallel: Sonnet reply + Haiku scoring
     const isFirstMessage = (currentSession?.message_count ?? 0) === 0;
 
-    const [replyResponse, qualifyResponse] = await Promise.all([
-      client.messages.create({
-        model:      'claude-sonnet-4-6',
-        max_tokens: 500,
-        system:     systemPrompt,
-        messages:   parsed.data.messages,
+    const [replyRes, qualifyResponse] = await Promise.all([
+      fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://shippingcow.ai',
+          'X-Title': 'ShippingCow',
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-4o-mini',
+          max_tokens: 500,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...parsed.data.messages,
+          ],
+        }),
       }),
-      lastUserMsg
+      lastUserMsg && process.env.ANTHROPIC_API_KEY
         ? client.messages.create({
             model:      'claude-haiku-4-5-20251001',
             max_tokens: 100,
             system:     QUALIFY_PROMPT,
             messages:   [{ role: 'user', content: lastUserMsg.content }],
-          })
+          }).catch(() => null)
         : Promise.resolve(null),
     ]);
 
-    const content = replyResponse.content[0]?.type === 'text' ? replyResponse.content[0].text : '';
-    if (!content) throw new Error('Empty response from Sonnet');
+    const replyData = await replyRes.json();
+    const content = replyData.choices?.[0]?.message?.content ?? '';
+    if (!content) {
+      console.error('[chat] OpenRouter error:', JSON.stringify(replyData));
+      throw new Error('Empty response from DeepSeek');
+    }
 
     // Parse qualify result
     let qualify: QualifyResult = { score: 0, intent: 'browsing', capture_ready: false, needs_human: false };
@@ -227,6 +243,19 @@ export async function PATCH(req: Request) {
   const { session_id, email, page_url, messages, qualified_score } = parsed.data;
 
   try {
+    // Session ownership check: must exist, must be recent, must not already have an email
+    const existing = await getChatSession(session_id);
+    if (!existing) {
+      return NextResponse.json({ error: 'Unknown session' }, { status: 404 });
+    }
+    if (existing.email) {
+      return NextResponse.json({ error: 'Email already captured' }, { status: 409 });
+    }
+    const ageMs = Date.now() - new Date(existing.first_seen).getTime();
+    if (ageMs > 24 * 60 * 60 * 1000) {
+      return NextResponse.json({ error: 'Session expired' }, { status: 410 });
+    }
+
     await updateSessionQualification({ session_id, email, qualified_score: qualified_score ?? 0 });
 
     await logChatEvent({

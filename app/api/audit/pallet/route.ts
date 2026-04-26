@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       totals: {
         total_pallet_cost: Math.round(totalPalletCost * 100) / 100,
         total_units_per_pallet: totalUnitsPerPallet,
-        avg_cost_per_unit: results.length > 0
+        avg_cost_per_unit: totalUnitsPerPallet > 0
           ? Math.round((totalPalletCost / totalUnitsPerPallet) * 100) / 100
           : 0,
       },

@@ -8,16 +8,56 @@ import {
   ESTIMATED_COST_PER_LB,
 } from '@/lib/constants';
 
+async function fireHighValueAlert(data: {
+  length: number; width: number; height: number;
+  actual_weight: number; monthly_volume: number; annualSavings: number;
+}) {
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+  if (!webhookUrl) return;
+
+  const text = [
+    `🐄 *High-value calculator session* — $${Math.round(data.annualSavings).toLocaleString()}/yr potential`,
+    `Dims: ${data.length}×${data.width}×${data.height} in | Weight: ${data.actual_weight} lbs | Volume: ${data.monthly_volume}/mo`,
+  ].join('\n');
+
+  await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+}
+
 const bodySchema = z.object({
   session_id:     z.string().optional(),
-  length:         z.number().positive(),
-  width:          z.number().positive(),
-  height:         z.number().positive(),
-  actual_weight:  z.number().positive(),
-  monthly_volume: z.number().int().min(1),
+  length:         z.number().positive().max(120),
+  width:          z.number().positive().max(120),
+  height:         z.number().positive().max(120),
+  actual_weight:  z.number().positive().max(500),
+  monthly_volume: z.number().int().min(1).max(100000),
 });
 
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const ipHits = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = ipHits.get(ip);
+  if (!record || record.resetAt < now) {
+    ipHits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (record.count >= RATE_LIMIT_MAX) return false;
+  record.count++;
+  return true;
+}
+
 export async function POST(req: Request) {
+  const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'unknown';
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => ({}));
   const parsed = bodySchema.safeParse(body);
 
@@ -50,6 +90,14 @@ export async function POST(req: Request) {
       savings_per_package: Math.round(savingsPerPkg * 100) / 100,
       annual_savings:      Math.round(annualSavings * 100) / 100,
     });
+
+    // Alert on high-value sessions (>$25K annual savings)
+    if (annualSavings >= 25000) {
+      fireHighValueAlert({ length, width, height, actual_weight, monthly_volume, annualSavings }).catch(
+        (e) => console.error('[calculator-session] alert error:', e)
+      );
+    }
+
     return NextResponse.json({ id: session.id });
   } catch (err) {
     // Non-fatal — calculator still works even if DB save fails

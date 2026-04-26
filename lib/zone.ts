@@ -82,11 +82,11 @@ export async function smartRoute(destZip: string): Promise<{
 }> {
   const destCoords = await getZipCoords(destZip);
   if (!destCoords) {
-    // Default to NJ if destination not found
+    // Unknown ZIP — use median US estimates to avoid $0 inbound cost / inflated zone mismatch
     return {
       best_warehouse: 'NJ',
-      zone: 5,
-      distance_miles: 0,
+      zone: 4,
+      distance_miles: 800,
       all_options: [],
     };
   }
@@ -122,4 +122,27 @@ export async function smartRoute(destZip: string): Promise<{
     distance_miles: best.distance_miles,
     all_options: options,
   };
+}
+
+/**
+ * Find the SC warehouse closest to an origin ZIP (for inbound LTL routing).
+ * The origin determines where inventory is stored — closest warehouse = lowest inbound cost.
+ */
+export async function findClosestWarehouseToOrigin(originZip: string): Promise<{
+  warehouse: string;
+  warehouse_zip: string;
+  inbound_distance_miles: number;
+}> {
+  const coords = await getZipCoords(originZip);
+  // Unknown ZIP — use median US cross-country distance to avoid silently zeroing inbound cost
+  if (!coords) return { warehouse: 'CA', warehouse_zip: '91761', inbound_distance_miles: 1200 };
+
+  let best = { warehouse: 'CA', warehouse_zip: '91761', inbound_distance_miles: Infinity };
+  for (const wh of WAREHOUSES) {
+    const dist = haversineDistance(coords.lat, coords.lng, wh.lat, wh.lng);
+    if (dist < best.inbound_distance_miles) {
+      best = { warehouse: wh.name, warehouse_zip: wh.zip, inbound_distance_miles: Math.round(dist * 10) / 10 };
+    }
+  }
+  return best;
 }
