@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS fedex_zone_chart (
   id            SERIAL PRIMARY KEY,
   origin_prefix CHAR(3) NOT NULL,
   dest_prefix   CHAR(3) NOT NULL,
-  zone          SMALLINT NOT NULL CHECK (zone BETWEEN 1 AND 8),
+  zone          SMALLINT NOT NULL CHECK (zone BETWEEN 1 AND 9),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(origin_prefix, dest_prefix)
 );

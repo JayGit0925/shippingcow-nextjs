@@ -8,7 +8,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Tracking number required' }, { status: 400 });
   }
 
-  const record = await getTracking(number);
+  let record;
+  try {
+    record = await getTracking(number);
+  } catch (err) {
+    console.error('[track GET] DB error', err);
+    return NextResponse.json({ error: 'Tracking lookup failed. Try again shortly.' }, { status: 500 });
+  }
   if (!record) {
     // Even unknown numbers return a playful mock result so the demo flows.
     // In production you'd return 404 or call a real carrier API.

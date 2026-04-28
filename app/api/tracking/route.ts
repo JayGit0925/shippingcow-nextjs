@@ -21,13 +21,22 @@ export async function GET(req: Request) {
     );
   }
 
-  const row = await getTracking(number) as {
-    tracking_number: string;
-    status: string;
-    origin: string;
-    destination: string;
-    est_delivery: string;
-  } | undefined;
+  let row;
+  try {
+    row = await getTracking(number) as {
+      tracking_number: string;
+      status: string;
+      origin: string;
+      destination: string;
+      est_delivery: string;
+    } | undefined;
+  } catch (err) {
+    console.error('[tracking GET] DB error', err);
+    return NextResponse.json(
+      { error: 'Tracking lookup failed. Try again shortly.' },
+      { status: 500 },
+    );
+  }
 
   if (!row) {
     return NextResponse.json(
