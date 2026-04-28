@@ -18,7 +18,7 @@ export default function OgImage() {
           alignItems: 'flex-start',
           justifyContent: 'center',
           padding: '80px',
-          fontFamily: 'Arial Black, sans-serif',
+          fontFamily: 'Inter, system-ui, sans-serif',
         }}
       >
         {/* Brand tag */}

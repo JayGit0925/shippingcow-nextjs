@@ -1,5 +1,6 @@
-// KB chunks seeded in migrations/003_chat_v2.sql.
-// This module does keyword-based retrieval (no vectors v1).
+// KB — keyword-based retrieval with DB-backed chunks, in-memory fallback.
+
+import { sql } from '@/lib/db';
 
 export type KbChunk = {
   source: string;
@@ -7,7 +8,7 @@ export type KbChunk = {
   keywords: string[];
 };
 
-// Fallback in-memory chunks — used if DB is unavailable or for edge runtime
+// Fallback in-memory chunks — used if DB is unavailable
 const FALLBACK_CHUNKS: KbChunk[] = [
   {
     source: 'dim225',
@@ -118,11 +119,35 @@ const FALLBACK_CHUNKS: KbChunk[] = [
   },
 ];
 
-export function retrieveChunks(query: string, topK = 5): KbChunk[] {
+export async function retrieveChunks(query: string, topK = 5): Promise<KbChunk[]> {
   const lower = query.toLowerCase();
   const words = lower.split(/\s+/);
 
-  const scored = FALLBACK_CHUNKS.map((chunk) => {
+  // Try DB first — keyword array overlap match
+  let chunks: KbChunk[] = [];
+  try {
+    const keywordTerms = words.filter((w) => w.length > 3);
+    if (keywordTerms.length > 0) {
+      const dbChunks = await sql<KbChunk[]>`
+        SELECT source, content, keywords
+        FROM chat_kb_chunks
+        WHERE keywords && ${sql.array(keywordTerms)}
+        LIMIT 50
+      `;
+      chunks = dbChunks.map((row) => ({
+        source: row.source,
+        content: row.content,
+        keywords: row.keywords ?? [],
+      }));
+    }
+  } catch (e) {
+    console.warn('[chat-kb] DB query failed, falling back to in-memory chunks:', String(e));
+  }
+
+  // Fall back to in-memory chunks if DB returned nothing
+  const source = chunks.length > 0 ? chunks : FALLBACK_CHUNKS;
+
+  const scored = source.map((chunk) => {
     let score = 0;
     for (const kw of chunk.keywords) {
       if (lower.includes(kw)) score += 2;

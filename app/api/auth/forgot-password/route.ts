@@ -3,12 +3,18 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import { getUserByEmail, createPasswordResetToken } from '@/lib/db';
 import { sendPasswordResetEmail } from '@/lib/email';
+import { isRateLimited } from '@/lib/rate-limit';
 
 const schema = z.object({
   email: z.string().email(),
 });
 
 export async function POST(req: Request) {
+  // Rate limit: 5 reset requests/min per IP
+  const ip = req.headers.get('x-forwarded-for') || 'unknown';
+  if (isRateLimited(`forgot-pw:${ip}`, 5, 60)) {
+    return NextResponse.json({ error: 'Too many password reset requests. Try again later.' }, { status: 429 });
+  }
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

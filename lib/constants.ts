@@ -264,7 +264,13 @@ export const STORAGE_PER_CBF_MONTH = 0.90  // per cubic foot per month
 
 // ============ LTL Trucking ============
 
-export const LTL_COST_PER_MILE = 2.50  // placeholder — will be replaced with broker API
+/** Placeholder LTL cost per mile — flat estimate only.
+ *  TO DO: Replace with broker API (DAT, Truckstop, or FreightWaves)
+ *  for real-time lane pricing. Current $2.50/mi is a conservative
+ *  average; actual varies $1.80–$4.50/mi by lane, fuel, and capacity.
+ *  @see https://www.dat.com/ for rate benchmarking
+ */
+export const LTL_COST_PER_MILE = 0.40;
 
 // ============ Pallet Specs ============
 

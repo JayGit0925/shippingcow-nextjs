@@ -24,6 +24,11 @@ export default function LoginPage() {
       if (!r.ok) {
         setError(data.error || 'Login failed');
         setLoading(false);
+        if (data.requires_verification) {
+          // Store email for verify page — session cookie is set, redirect immediately
+          sessionStorage.setItem('verify_email', form.email);
+          router.push('/verify-email');
+        }
         return;
       }
       router.push('/dashboard');

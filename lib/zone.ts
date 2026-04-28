@@ -1,4 +1,5 @@
 import { getZipCoords } from './db';
+import { lookupZone } from './zone-chart-data';
 
 /**
  * Calculate distance between two coordinates using the Haversine formula
@@ -34,12 +35,34 @@ export function distanceToZone(miles: number): number {
 }
 
 /**
- * Estimate the zone for a shipment from origin to destination ZIP
+ * Estimate the zone for a shipment from origin to destination ZIP.
+ * Uses real USPS zone chart when origin prefix is one of our warehouses,
+ * falls back to haversine distance estimate otherwise.
  */
 export async function estimateZone(
   originZip: string,
   destZip: string
-): Promise<{zone: number, distance_miles: number} | null> {
+): Promise<{zone: number, distance_miles: number, source: 'chart' | 'haversine'} | null> {
+  const originPrefix = originZip.slice(0, 3);
+  const destPrefix = destZip.slice(0, 3);
+
+  // Try real zone chart first
+  const realZone = lookupZone(originPrefix, destPrefix);
+  if (realZone !== null) {
+    // Still compute distance for reference, but zone is authoritative
+    const originCoords = await getZipCoords(originZip);
+    const destCoords = await getZipCoords(destZip);
+    let distance_miles = 0;
+    if (originCoords && destCoords) {
+      distance_miles = Math.round(haversineDistance(
+        originCoords.lat, originCoords.lng,
+        destCoords.lat, destCoords.lng
+      ) * 10) / 10;
+    }
+    return { zone: realZone, distance_miles, source: 'chart' };
+  }
+
+  // Fall back to haversine estimate
   const originCoords = await getZipCoords(originZip);
   const destCoords = await getZipCoords(destZip);
 
@@ -58,7 +81,8 @@ export async function estimateZone(
 
   return {
     zone,
-    distance_miles: Math.round(distance * 10) / 10, // Round to 1 decimal place
+    distance_miles: Math.round(distance * 10) / 10,
+    source: 'haversine',
   };
 }
 
@@ -94,16 +118,18 @@ export async function smartRoute(destZip: string): Promise<{
   const options: Array<{warehouse: string, zone: number, distance_miles: number}> = [];
 
   for (const warehouse of WAREHOUSES) {
+    // Try real USPS zone chart first
+    const realZone = lookupZone(warehouse.zip.slice(0, 3), destZip.slice(0, 3));
     const distance = haversineDistance(
       warehouse.lat,
       warehouse.lng,
       destCoords.lat,
       destCoords.lng
     );
-    const zone = distanceToZone(distance);
+
     options.push({
       warehouse: warehouse.name,
-      zone,
+      zone: realZone ?? distanceToZone(distance),
       distance_miles: Math.round(distance * 10) / 10,
     });
   }

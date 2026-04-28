@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     title:       'ShippingCow — Heavy Goods Fulfillment with DIM 225 Pricing',
     description: 'DIM 225 pricing. Enterprise carrier rates. Zero shrinkage. 2-day delivery.',
     type:        'website',
-    url:         'https://shippingcow.io',
+    url:         'https://shippingcow.ai',
   },
 };
 
@@ -25,7 +25,7 @@ const JSON_LD = {
   '@context':   'https://schema.org',
   '@type':      'Organization',
   name:         'ShippingCow',
-  url:          'https://shippingcow.io',
+  url:          'https://shippingcow.ai',
   description:  'AI-native heavy-goods fulfillment platform with DIM 225 pricing, enterprise carrier rates, and guaranteed 2-day delivery to 92% of the continental US.',
   foundingDate: '2026',
   areaServed:   'US',

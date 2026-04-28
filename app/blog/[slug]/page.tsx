@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { getAllPosts, getPost } from '@/lib/blog';
 
+export const revalidate = 3600; // ISR: rebuild every hour
+
 export async function generateStaticParams() {
   return getAllPosts().map((p) => ({ slug: p.slug }));
 }
@@ -41,7 +43,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     publisher: {
       '@type': 'Organization',
       name:    'ShippingCow',
-      logo:    { '@type': 'ImageObject', url: 'https://shippingcow.io/logo.png' },
+      logo:    { '@type': 'ImageObject', url: 'https://shippingcow.ai/logo.png' },
     },
   };
 

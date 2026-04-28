@@ -84,7 +84,7 @@ export async function POST(req: Request) {
 
   // Build KB context from last user message
   const kbQuery = lastUserMsg?.content || '';
-  const kbChunks = retrieveChunks(kbQuery);
+  const kbChunks = await retrieveChunks(kbQuery);
   const kbContext = buildKbContext(kbChunks);
 
   // Build calculator context string if available

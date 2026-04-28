@@ -1,6 +1,6 @@
 import { getAllPosts } from '@/lib/blog';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://shippingcow.io';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://shippingcow.ai';
 
 export function GET() {
   const posts = getAllPosts();

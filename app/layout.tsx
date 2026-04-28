@@ -3,9 +3,13 @@ import './globals.css';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 import ChatWidget from '@/components/ChatWidget';
+import CookieConsent from '@/components/CookieConsent';
+import PostHogProvider from '@/components/PostHogProvider';
+import JsonLd from '@/components/JsonLd';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://shippingcow.io'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://shippingcow.ai'),
   title: 'Shipping Cow — Heavy Goods 3PL & E-Commerce Fulfillment | Cut Shipping Costs 80%',
   description:
     'Shipping Cow AI is the #1 fulfillment platform for heavy goods sellers. Cut FedEx costs up to 80%, guarantee 2-day delivery, and automate your logistics paperwork with AI.',
@@ -26,7 +30,7 @@ export const metadata: Metadata = {
     description:
       'Enterprise logistics rates for mid-market heavy goods sellers. Up to 80% off FedEx. 2-day guaranteed. AI-powered back office.',
     type: 'website',
-    url: 'https://shippingcow.io',
+    url: 'https://shippingcow.ai',
     images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
   },
   twitter: {
@@ -34,6 +38,9 @@ export const metadata: Metadata = {
     title: 'ShippingCow — Heavy Goods Fulfillment with DIM 225 Pricing',
     description: 'DIM 225 pricing. 80% off FedEx rates. Zero shrinkage. 2-day delivery to 92% of the US.',
     images: ['/opengraph-image'],
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || '',
   },
 };
 
@@ -45,6 +52,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <Footer />
         <ChatWidget />
+        <CookieConsent />
+        <PostHogProvider />
+        <JsonLd />
+        <Analytics />
       </body>
     </html>
   );
