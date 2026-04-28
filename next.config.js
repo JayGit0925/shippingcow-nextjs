@@ -1,10 +1,18 @@
 /** @type {import('next').NextConfig} */
+const { withSentryConfig } = require('@sentry/nextjs');
+
 const nextConfig = {
   reactStrictMode: true,
-  // better-sqlite3 is a native module; Next.js should skip bundling it
   experimental: {
     serverComponentsExternalPackages: ['better-sqlite3'],
   },
 };
 
-module.exports = nextConfig;
+module.exports = withSentryConfig(nextConfig, {
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+}, {
+  hideSourceMaps: true,
+  widenClientFileUpload: true,
+});

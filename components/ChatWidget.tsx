@@ -6,7 +6,25 @@ import type { Message } from '@/lib/types';
 
 // ─── Session storage ────────────────────────────────────────────────────────
 
+const MESSAGES_KEY = 'sc_chat_messages';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function loadMessages(): Message[] {
+  try {
+    const raw = sessionStorage.getItem(MESSAGES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMessages(msgs: Message[]) {
+  try {
+    sessionStorage.setItem(MESSAGES_KEY, JSON.stringify(msgs));
+  } catch {}
+}
 
 function getOrCreateSessionId(): string {
   const created = Number(localStorage.getItem('sc_session_created') ?? 0);
@@ -118,6 +136,7 @@ export default function ChatWidget() {
   const [emailSubmitting, setEmailSubmitting] = useState(false);
   const [rateLimited, setRateLimited]     = useState(false);
   const [userMsgCount, setUserMsgCount]   = useState(0);
+  const [skipMsgCount, setSkipMsgCount]   = useState(0); // userMsgCount at last Skip, 0 = never skipped
   const [sessionId, setSessionId]   = useState<string>('');
   const [calcContext, setCalcContext] = useState<Record<string, unknown> | null>(null);
   const [isMobile, setIsMobile]     = useState(false);
@@ -127,19 +146,30 @@ export default function ChatWidget() {
   // Suppress on dashboard and inquiry pages
   const suppressed = SUPPRESSED_PATHS.some((p) => pathname?.startsWith(p));
 
-  // Init session and opener on mount
+  // Init session on mount only — never re-init on route change
   useEffect(() => {
-    if (suppressed) return;
     const sid = getOrCreateSessionId();
     setSessionId(sid);
     const ctx = getCalculatorContext();
     setCalcContext(ctx);
     setIsMobile(window.innerWidth < 768);
 
-    const opener = getOpener(pathname ?? '', ctx);
-    setMessages([{ role: 'assistant', content: opener.message }]);
+    const stored = loadMessages();
+    if (stored.length > 0) {
+      setMessages(stored);
+    }
+    // Opener is set below via the pathname effect
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Analytics: fire widget_opened event on first open tracked by open state change
+  // Recompute opener when pathname changes — but only if no message history exists
+  useEffect(() => {
+    if (suppressed) return;
+    const stored = loadMessages();
+    if (stored.length === 0) {
+      const ctx = getCalculatorContext();
+      const opener = getOpener(pathname ?? '', ctx);
+      setMessages([{ role: 'assistant', content: opener.message }]);
+    }
   }, [pathname, suppressed]);
 
   // Auto-scroll
@@ -149,6 +179,30 @@ export default function ChatWidget() {
       inputRef.current?.focus();
     }
   }, [messages, open]);
+
+  // Persist messages to sessionStorage so they survive route changes
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveMessages(messages);
+    }
+  }, [messages]);
+
+  // Restore pending email AND capture mode when panel opens
+  useEffect(() => {
+    if (open && !emailCaptured) {
+      try {
+        const pending = sessionStorage.getItem('sc_pending_email');
+        if (pending) {
+          setEmailInput(pending);
+          sessionStorage.removeItem('sc_pending_email');
+        }
+        if (sessionStorage.getItem('sc_capture_mode') === '1') {
+          setCaptureMode(true);
+          sessionStorage.removeItem('sc_capture_mode');
+        }
+      } catch {}
+    }
+  }, [open, emailCaptured]);
 
   // Auto-open trigger: 30s delay OR exit intent
   useEffect(() => {
@@ -174,7 +228,8 @@ export default function ChatWidget() {
 
     // Don't trigger auto-open in first 3 seconds of page load
     const initDelay = setTimeout(() => {
-      timer = setTimeout(attemptAutoOpen, 30_000);
+      const shortDelay = pathname?.startsWith('/calculator') || pathname?.startsWith('/audit');
+      timer = setTimeout(attemptAutoOpen, shortDelay ? 10_000 : 30_000);
       document.addEventListener('mouseleave', handleMouseLeave);
     }, 3_000);
 
@@ -200,6 +255,13 @@ export default function ChatWidget() {
   }
 
   function handleClose() {
+    // Persist pending email and capture mode so they survive panel close/reopen
+    if (emailInput.trim()) {
+      try { sessionStorage.setItem('sc_pending_email', emailInput.trim()); } catch {}
+    }
+    if (captureMode && !emailCaptured) {
+      try { sessionStorage.setItem('sc_capture_mode', '1'); } catch {}
+    }
     setOpen(false);
     setDismissed();
   }
@@ -210,6 +272,7 @@ export default function ChatWidget() {
       localStorage.removeItem('sc_session_created');
       localStorage.removeItem('sc_email_captured');
       localStorage.removeItem('sc_widget_dismissed_until');
+      sessionStorage.removeItem(MESSAGES_KEY);
     } catch {}
     const newSid = crypto.randomUUID();
     localStorage.setItem('sc_session_id', newSid);
@@ -222,9 +285,7 @@ export default function ChatWidget() {
     setUserMsgCount(0);
   }
 
-  const send = useCallback(async (e?: FormEvent) => {
-    e?.preventDefault();
-    const text = input.trim();
+  const doSend = useCallback(async (text: string) => {
     if (!text || loading) return;
 
     const userMsg: Message = { role: 'user', content: text };
@@ -263,8 +324,10 @@ export default function ChatWidget() {
         return;
       }
 
-      // Trigger email capture: after 2nd user message OR high ICP score from API
-      if (!emailCaptured && !captureMode && (newCount >= 2 || data.capture_ready)) {
+      // Trigger email capture: after 4+ user messages OR high ICP score from API.
+      // If user previously skipped, require 2 more messages since the skip.
+      const captureByCount = newCount >= 4 && (skipMsgCount === 0 || newCount - skipMsgCount >= 2);
+      if (!emailCaptured && !captureMode && (captureByCount || data.capture_ready)) {
         setTimeout(() => setCaptureMode(true), 800);
       }
     } catch {
@@ -272,7 +335,12 @@ export default function ChatWidget() {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages, sessionId, calcContext, emailCaptured, captureMode, userMsgCount]);
+  }, [loading, messages, sessionId, calcContext, emailCaptured, captureMode, userMsgCount, skipMsgCount]);
+
+  const send = useCallback(async (e?: FormEvent) => {
+    e?.preventDefault();
+    await doSend(input.trim());
+  }, [input, doSend]);
 
   async function submitEmail(e: FormEvent) {
     e.preventDefault();
@@ -305,7 +373,7 @@ export default function ChatWidget() {
         ...prev,
         {
           role: 'assistant',
-          content: `Got it! I'll have our team send a custom savings estimate to ${emailInput.trim()}. Usually lands within a few hours. Anything else I can answer while you're here?`,
+          content: `Got it! Check your inbox in 2 hours (peek at spam). Our team personally reviews every estimate. Anything else I can answer while you're here?`,
         },
       ]);
     } catch {
@@ -352,7 +420,7 @@ export default function ChatWidget() {
           ...buttonPosition,
         }}
       >
-        {open ? '✕' : '🐄'}
+        {open ? '✕' : (isMobile ? '💬' : '🐄')}
       </button>
 
       {/* Chat panel */}
@@ -375,10 +443,7 @@ export default function ChatWidget() {
           {/* Header */}
           <div style={{ background: '#1E40AF', color: '#fff', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, fontWeight: 700, fontSize: '0.9rem', flexShrink: 0 }}>
             <span>🐄</span>
-            <span>ShippingCow AI</span>
-            <span style={{ marginLeft: 'auto', fontSize: 10, background: '#22c55e', borderRadius: 99, padding: '2px 8px', fontWeight: 600 }}>
-              Online
-            </span>
+            <span>Save on Shipping</span>
           </div>
 
           {/* Messages */}
@@ -402,6 +467,33 @@ export default function ChatWidget() {
               </div>
             ))}
 
+            {messages.filter(m => m.role === 'user').length === 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                {[
+                  "How much can I save on shipping?",
+                  "Tell me about DIM 225 pricing",
+                  "What warehouses do you have?",
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    onClick={() => doSend(chip)}
+                    style={{
+                      background: '#EFF6FF',
+                      border: '1px solid #BFDBFE',
+                      borderRadius: 16,
+                      padding: '5px 12px',
+                      fontSize: '0.8rem',
+                      color: '#1E3A8A',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {loading && (
               <div style={{ alignSelf: 'flex-start', background: '#F3F4F6', borderRadius: '12px 12px 12px 0', padding: '7px 14px', color: '#6B7280', letterSpacing: 2 }}>
                 •••
@@ -424,7 +516,7 @@ export default function ChatWidget() {
             {captureMode && !emailCaptured && !rateLimited && (
               <div style={{ alignSelf: 'flex-start', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '10px 12px', maxWidth: '90%' }}>
                 <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: '#1E3A8A', fontWeight: 600 }}>
-                  Want me to send you a custom savings estimate?
+                  I found a way to cut your shipping cost — want the numbers sent to your inbox?
                 </p>
                 <form onSubmit={submitEmail} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <input
@@ -445,7 +537,7 @@ export default function ChatWidget() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setCaptureMode(false)}
+                      onClick={() => { setSkipMsgCount(userMsgCount); setCaptureMode(false); }}
                       style={{ background: 'transparent', color: '#6B7280', border: '1px solid #D1D5DB', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem' }}
                     >
                       Skip

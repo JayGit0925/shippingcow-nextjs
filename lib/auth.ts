@@ -1,11 +1,17 @@
 import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
+// cookies() is synchronous in Next.js 14.
+// When upgrading to Next.js 15+: change to `const store = await cookies()`
 import { cookies } from 'next/headers';
 import { getUserById, User } from './db';
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'dev-only-secret-change-me-in-production'
-);
+function getSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required. Set it in your .env file or deployment environment.');
+  }
+  return new TextEncoder().encode(secret);
+}
 const COOKIE_NAME = 'sc_session';
 const EXPIRY_DAYS = 7;
 
@@ -22,12 +28,12 @@ export async function signToken(userId: number): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(`${EXPIRY_DAYS}d`)
-    .sign(SECRET);
+    .sign(getSecret());
 }
 
 export async function verifyToken(token: string): Promise<number | null> {
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getSecret());
     return payload.sub ? parseInt(payload.sub as string, 10) : null;
   } catch {
     return null;
@@ -74,6 +80,7 @@ export function publicUser(user: User) {
     email: user.email,
     name: user.name,
     company: user.company,
+    email_verified: user.email_verified,
     created_at: user.created_at,
   };
 }

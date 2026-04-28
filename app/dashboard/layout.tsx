@@ -15,6 +15,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
+  // Gate: email must be verified before accessing dashboard
+  if (!user.email_verified) {
+    redirect('/verify-email');
+  }
+
   const navItems = isAdmin(user)
     ? [...BASE_NAV.slice(0, 3), ADMIN_NAV, BASE_NAV[3]]
     : BASE_NAV;

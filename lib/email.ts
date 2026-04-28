@@ -151,6 +151,63 @@ export async function sendLeadFollowup(params: {
   }
 }
 
+export async function sendGuideEmail(to: string, name: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const client = getClient();
+  if (!client) return { ok: false, error: 'Email not configured' };
+
+  const displayName = name || 'there';
+
+  try {
+    await client.emails.send({
+      from,
+      to,
+      subject: '🐄 Your Free Heavy Parcel Cost-Saving Guide',
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1A202C;">
+          <div style="background: #0052C9; color: #fff; padding: 24px; text-align: center; border: 4px solid #1A202C;">
+            <h1 style="margin: 0; font-size: 28px; letter-spacing: 0.02em;">SHIPPING COW</h1>
+            <p style="margin: 8px 0 0; color: #FEB81B;">Your heavy parcel cost-saving guide</p>
+          </div>
+          <div style="background: #fff; padding: 24px; border: 4px solid #1A202C; border-top: 0;">
+            <p>Hi ${escapeHtml(displayName)},</p>
+            <p>Here's the quick-start guide to cutting your heavy parcel shipping costs. The math works for any product in the 50-150 lb range.</p>
+
+            <h3 style="color: #0052C9; margin: 24px 0 8px;">1. DIM 225 — The 30% Hack</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Standard carriers use a DIM divisor of 139, billing you for phantom weight. At DIM 225, your package bills at actual weight. A 40 lb bike in a standard box drops from 52 lb billable to 40 lb — 30% savings on every shipment.</p>
+
+            <h3 style="color: #0052C9; margin: 24px 0 8px;">2. Fuel Surcharge Waivers</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Fuel surcharges add 8-15% to every bill. They're applied post-discount, so they eat into your negotiated rates. Direct carrier contracts with built-in waivers eliminate this hidden tax.</p>
+
+            <h3 style="color: #0052C9; margin: 24px 0 8px;">3. Smart Zone Routing</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Shipping coast-to-coast (Zone 8) costs 2-3× more than Zone 2. With hubs in NJ, CA, and TX, orders route to the closest facility — more Zone 2-3 deliveries, fewer Zone 7-8 shipments.</p>
+
+            <h3 style="color: #0052C9; margin: 24px 0 8px;">4. Heavy Parcel Pricing</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Standard carriers punish 50-150 lb shipments with oversize surcharges, liftgate fees, and residential delivery charges. A dedicated heavy parcel partner prices for this category from the ground up.</p>
+
+            <h3 style="color: #0052C9; margin: 24px 0 8px;">5. Your Audit Checklist</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Check your DIM divisor, review fuel surcharge %, map zone distribution, identify heavy parcel volume, calculate hidden fees as % of base rate, compare 3PL pricing.</p>
+
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="https://shippingcow.ai/audit" style="background: #0052C9; color: #fff; padding: 14px 28px; text-decoration: none; font-weight: 700; border: 3px solid #1A202C; display: inline-block;">
+                Run Your Free Audit →
+              </a>
+            </div>
+            <p style="font-size: 13px; color: #666; text-align: center;">Upload your shipment data. See your exact savings in under 60 seconds.</p>
+
+            <p style="margin-top: 32px;">— The Shipping Cow Team 🐄</p>
+            <p style="font-size: 12px; color: #9CA3AF; margin-top: 16px;">P.S. Want personalized numbers? Reply to this email with your monthly volume and we'll run the calc for you.</p>
+          </div>
+        </div>
+      `,
+    });
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[email] guide send failed:', msg);
+    return { ok: false, error: msg };
+  }
+}
+
 export async function sendAuditReport(
   to: string,
   auditId: string,
@@ -191,6 +248,43 @@ export async function sendAuditReport(
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     console.error('[email] audit report send failed:', msg);
+    return { ok: false, error: msg };
+  }
+}
+
+export async function sendVerificationCode(to: string, name: string, code: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const client = getClient();
+  if (!client) return { ok: false, error: 'Email not configured' };
+
+  try {
+    await client.emails.send({
+      from,
+      to,
+      subject: '🐄 Your Shipping Cow verification code',
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1A202C;">
+          <div style="background: #0052C9; color: #fff; padding: 24px; text-align: center; border: 4px solid #1A202C;">
+            <h1 style="margin: 0; font-size: 28px; letter-spacing: 0.02em;">SHIPPING COW</h1>
+            <p style="margin: 8px 0 0; color: #FEB81B;">Verify your email address</p>
+          </div>
+          <div style="background: #fff; padding: 24px; border: 4px solid #1A202C; border-top: 0;">
+            <p>Hi ${escapeHtml(name)},</p>
+            <p>Thanks for joining the herd! Enter this code to verify your email address:</p>
+            <div style="text-align: center; margin: 32px 0;">
+              <div style="font-family: 'Courier New', monospace; font-size: 42px; font-weight: 900; color: #0052C9; letter-spacing: 8px; background: #F4F7FF; padding: 16px; border: 3px solid #1A202C; display: inline-block;">
+                ${escapeHtml(code)}
+              </div>
+            </div>
+            <p style="font-size: 14px; color: #666;">This code expires in <strong>15 minutes</strong>.</p>
+            <p style="font-size: 13px; color: #999;">If you didn't create an account, you can safely ignore this email.</p>
+            <p style="margin-top: 32px;">— The Shipping Cow Team 🐄</p>
+          </div>
+        </div>
+      `,
+    });
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
     return { ok: false, error: msg };
   }
 }

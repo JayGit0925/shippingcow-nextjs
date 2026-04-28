@@ -10,6 +10,27 @@ import {
   ESTIMATED_COST_PER_LB,
 } from '@/lib/constants';
 
+// ---- Types ----
+type ZoneResults = {
+  current_zone: number;
+  current_distance_miles: number;
+  sc_warehouse: string;
+  sc_zone: number;
+  sc_distance_miles: number;
+  zone_improvement: number;
+  current_billable_139: number;
+  sc_billable_225: number;
+  current_cost_per_pkg: number;
+  sc_cost_per_pkg: number;
+  inbound_cost_per_unit: number;
+  savings_per_pkg: number;
+  annual_savings: number;
+  dim139: number; dim166: number; dim225: number;
+  bill139: number; bill166: number; bill225: number;
+  old_estimate_per_pkg: number;
+  old_estimate_annual: number;
+};
+
 // ---- Math helpers ----
 function dimWeight(l: number, w: number, h: number, divisor: number) {
   return (l * w * h) / divisor;
@@ -101,6 +122,11 @@ export default function DimCalculator() {
     )
   );
   const [copied, setCopied] = useState(false);
+  const [originZip, setOriginZip] = useState('');
+  const [destZip, setDestZip] = useState('');
+  const [zoneResults, setZoneResults] = useState<ZoneResults | null>(null);
+  const [zoneLoading, setZoneLoading] = useState(false);
+  const [zoneError, setZoneError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionIdRef = useRef<string | null>(null);
 
@@ -140,6 +166,48 @@ export default function DimCalculator() {
     }
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [length, width, height, weight, volume, saveToDb]);
+
+  // Fetch zone-based real estimate when ZIPs are valid
+  const zoneDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!originZip || !destZip || originZip.length !== 5 || destZip.length !== 5) {
+      setZoneResults(null);
+      setZoneError(null);
+      return;
+    }
+
+    if (zoneDebounceRef.current) clearTimeout(zoneDebounceRef.current);
+    zoneDebounceRef.current = setTimeout(async () => {
+      setZoneLoading(true);
+      setZoneError(null);
+      try {
+        const r = await fetch('/api/calculator/estimate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            length, width, height,
+            weight,
+            monthly_volume: volume,
+            origin_zip: originZip,
+            dest_zip: destZip,
+          }),
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          setZoneError(data.error || 'Could not estimate');
+          setZoneResults(null);
+        } else {
+          setZoneResults(data as ZoneResults);
+        }
+      } catch {
+        setZoneError('Network error');
+        setZoneResults(null);
+      }
+      setZoneLoading(false);
+    }, 600);
+
+    return () => { if (zoneDebounceRef.current) clearTimeout(zoneDebounceRef.current); };
+  }, [length, width, height, weight, volume, originZip, destZip]);
 
   function handleCopyLink() {
     const url = new URL(window.location.href);
@@ -203,6 +271,40 @@ export default function DimCalculator() {
             />
           </div>
 
+          {/* ---- ZIP inputs for zone-based estimate ---- */}
+          <div style={{ marginTop: '1rem', borderTop: '2px dashed rgba(0,0,0,0.1)', paddingTop: '1rem' }}>
+            <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--blue)', marginBottom: '0.6rem', letterSpacing: '0.04em' }}>
+              📍 Zone-Based Real Estimate
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div className="dim-calculator__field" style={{ flex: 1 }}>
+                <label className="dim-calculator__label">Origin ZIP</label>
+                <input
+                  type="text" maxLength={5} inputMode="numeric"
+                  value={originZip}
+                  onChange={(e) => setOriginZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                  className="dim-calculator__input"
+                  placeholder="Your warehouse ZIP"
+                />
+              </div>
+              <div className="dim-calculator__field" style={{ flex: 1 }}>
+                <label className="dim-calculator__label">Dest. ZIP</label>
+                <input
+                  type="text" maxLength={5} inputMode="numeric"
+                  value={destZip}
+                  onChange={(e) => setDestZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                  className="dim-calculator__input"
+                  placeholder="Customer ZIP"
+                />
+              </div>
+            </div>
+            {originZip.length === 5 && destZip.length === 5 && (
+              <div style={{ fontSize: '0.72rem', color: '#6b7280', marginTop: '0.3rem' }}>
+                {zoneLoading ? '⏳ Calculating real rates...' : zoneError ? `⚠ ${zoneError}` : ''}
+              </div>
+            )}
+          </div>
+
           <div style={{ marginTop: '1rem', padding: '0.8rem', background: 'rgba(0,82,201,0.08)', border: '1px solid rgba(0,82,201,0.2)', fontSize: '0.8rem', color: '#3a4454' }}>
             <strong>Cubic inches:</strong> {(length * width * height).toLocaleString()} in³
           </div>
@@ -249,6 +351,66 @@ export default function DimCalculator() {
               </div>
             </div>
           </div>
+
+          {/* ---- Zone-based real estimate results ---- */}
+          {zoneResults && (
+            <div style={{ background: '#EEF2FF', border: '4px solid var(--blue)', padding: '1.2rem', boxShadow: '4px 4px 0 var(--blue)', marginBottom: '1.5rem' }}>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--blue)', marginBottom: '0.6rem', letterSpacing: '0.04em' }}>
+                📍 Real Zone-Based Savings
+              </div>
+
+              {/* Zone routing summary */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                <div style={{ background: '#fff', padding: '0.6rem 0.8rem', border: '2px solid var(--dark)' }}>
+                  <div style={{ fontSize: '0.65rem', color: '#6b7280', fontFamily: 'var(--font-pixel)', textTransform: 'uppercase' }}>Current (Direct)</div>
+                  <div style={{ fontWeight: 700 }}>Zone {zoneResults.current_zone} · {zoneResults.current_distance_miles.toLocaleString()} mi</div>
+                  <div style={{ fontSize: '0.75rem', color: '#3a4454' }}>Bill: {zoneResults.current_billable_139} lbs · <strong>${zoneResults.current_cost_per_pkg}/pkg</strong></div>
+                </div>
+                <div style={{ background: '#fff', padding: '0.6rem 0.8rem', border: '2px solid #059669' }}>
+                  <div style={{ fontSize: '0.65rem', color: '#059669', fontFamily: 'var(--font-pixel)', textTransform: 'uppercase' }}>ShippingCow (via {zoneResults.sc_warehouse})</div>
+                  <div style={{ fontWeight: 700 }}>Zone {zoneResults.sc_zone} · {zoneResults.sc_distance_miles.toLocaleString()} mi</div>
+                  <div style={{ fontSize: '0.75rem', color: '#3a4454' }}>Bill: {zoneResults.sc_billable_225} lbs · <strong>${zoneResults.sc_cost_per_pkg}/pkg</strong></div>
+                </div>
+              </div>
+
+              {/* Savings breakdown */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem' }}>
+                <div style={{ background: 'var(--yellow)', padding: '0.8rem', border: '3px solid var(--dark)', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', marginBottom: '0.3rem', color: '#3a4454' }}>
+                    Zone Improvement
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--dark)' }}>
+                    -{zoneResults.zone_improvement}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#3a4454' }}>zones closer</div>
+                </div>
+                <div style={{ background: 'var(--yellow)', padding: '0.8rem', border: '3px solid var(--dark)', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', marginBottom: '0.3rem', color: '#3a4454' }}>
+                    Per Package
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--dark)' }}>
+                    ${zoneResults.savings_per_pkg.toFixed(2)}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#3a4454' }}>real savings</div>
+                </div>
+                <div style={{ background: '#059669', padding: '0.8rem', border: '3px solid var(--dark)', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', marginBottom: '0.3rem', color: 'rgba(255,255,255,0.8)' }}>
+                    Annual (Real)
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>
+                    ${zoneResults.annual_savings >= 1000 ? `${(zoneResults.annual_savings / 1000).toFixed(1)}K` : zoneResults.annual_savings}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)' }}>
+                    vs old est. ${zoneResults.old_estimate_annual >= 1000 ? `${(zoneResults.old_estimate_annual / 1000).toFixed(1)}K` : zoneResults.old_estimate_annual}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.6rem', textAlign: 'center' }}>
+                Includes rate card, handling fees, and inbound LTL cost amortized per unit.
+              </div>
+            </div>
+          )}
 
           {/* 3-column detail table */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem', marginBottom: '1.5rem' }}>

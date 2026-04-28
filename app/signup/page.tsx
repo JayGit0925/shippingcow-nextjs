@@ -26,7 +26,13 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
-      router.push('/dashboard');
+      if (data.requires_verification) {
+        // Store user info for the verify page
+        sessionStorage.setItem('verify_email', form.email);
+        router.push('/verify-email');
+      } else {
+        router.push('/dashboard');
+      }
       router.refresh();
     } catch {
       setError('Network error. Please try again.');

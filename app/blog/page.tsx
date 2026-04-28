@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getAllPosts, BLOG_CATEGORIES } from '@/lib/blog';
 
+export const revalidate = 3600; // ISR: rebuild every hour
+
 export const metadata: Metadata = {
   title:       'ShippingCow Blog — Heavy Goods Shipping Insights',
   description: 'Guides, data, and tactics for heavy-goods e-commerce sellers. DIM weight, zone skipping, carrier pricing, and fulfillment strategy.',

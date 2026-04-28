@@ -8,6 +8,7 @@ import {
   getUserById,
 } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
+import { isRateLimited } from '@/lib/rate-limit';
 
 const schema = z.object({
   token: z.string().min(1),
@@ -15,6 +16,11 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
+  // Rate limit: 5 attempts/min per IP
+  const ip = req.headers.get('x-forwarded-for') || 'unknown';
+  if (isRateLimited(`reset-pw:${ip}`, 5, 60)) {
+    return NextResponse.json({ error: 'Too many attempts. Try again later.' }, { status: 429 });
+  }
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

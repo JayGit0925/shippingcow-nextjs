@@ -28,6 +28,16 @@ export type User = {
   password_hash: string;
   name: string;
   company: string | null;
+  email_verified: boolean;
+  created_at: string;
+};
+
+export type EmailVerificationCode = {
+  id: number;
+  user_id: number;
+  code: string;
+  expires_at: string;
+  used: boolean;
   created_at: string;
 };
 
@@ -83,6 +93,40 @@ export async function createUser(params: {
 
 export async function updateUserPassword(userId: number, passwordHash: string): Promise<void> {
   await sql`UPDATE users SET password_hash = ${passwordHash} WHERE id = ${userId}`;
+}
+
+// ============ Email verification helpers ============
+
+export async function createVerificationCode(userId: number): Promise<string> {
+  // 4-digit numeric code
+  const code = String(Math.floor(1000 + Math.random() * 9000));
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+  await sql`
+    INSERT INTO email_verification_codes (user_id, code, expires_at)
+    VALUES (${userId}, ${code}, ${expiresAt.toISOString()})
+  `;
+  return code;
+}
+
+export async function getVerificationCode(userId: number, code: string): Promise<EmailVerificationCode | undefined> {
+  const rows = await sql<EmailVerificationCode[]>`
+    SELECT * FROM email_verification_codes
+    WHERE user_id = ${userId} AND code = ${code} AND used = false AND expires_at > NOW()
+    ORDER BY created_at DESC LIMIT 1
+  `;
+  return rows[0];
+}
+
+export async function markVerificationCodeUsed(id: number): Promise<void> {
+  await sql`UPDATE email_verification_codes SET used = true WHERE id = ${id}`;
+}
+
+export async function setEmailVerified(userId: number): Promise<void> {
+  await sql`UPDATE users SET email_verified = true WHERE id = ${userId}`;
+}
+
+export async function invalidateOldCodes(userId: number): Promise<void> {
+  await sql`UPDATE email_verification_codes SET used = true WHERE user_id = ${userId} AND used = false`;
 }
 
 // ============ Inquiry helpers ============

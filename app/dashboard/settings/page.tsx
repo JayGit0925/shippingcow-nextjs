@@ -25,7 +25,7 @@ export default async function SettingsPage() {
             </div>
           ))}
           <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '0.5rem' }}>
-            To update your name or company, contact <a href="mailto:support@shippingcow.io" style={{ color: 'var(--blue)' }}>support@shippingcow.io</a>
+            To update your name or company, contact <a href="mailto:support@shippingcow.ai" style={{ color: 'var(--blue)' }}>support@shippingcow.ai</a>
           </p>
         </div>
 
