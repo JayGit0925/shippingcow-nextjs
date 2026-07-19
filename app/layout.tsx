@@ -10,17 +10,15 @@ import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://shippingcow.ai'),
-  title: 'Shipping Cow — Heavy Goods 3PL & E-Commerce Fulfillment | Cut Shipping Costs 80%',
+  title: 'Shipping Cow — 3PL for 50–149 lb Parcels | DIM 225 Billing',
   description:
-    'Shipping Cow AI is the #1 fulfillment platform for heavy goods sellers. Cut FedEx costs up to 80%, guarantee 2-day delivery, and automate your logistics paperwork with AI.',
+    'The 3PL built for heavy parcels. DIM 225 billing (vs carriers’ 139), pooled enterprise FedEx rates, and zone-skipping — typically 15–20% lower all-in cost, up to 52% on zone 7–8 lanes.',
   keywords: [
     'heavy goods 3PL',
     'oversized shipping',
     'ecommerce fulfillment',
     'cut shipping costs',
     'DIM weight optimizer',
-    'Amazon SFP fulfillment',
-    'TikTok Shop dispatch',
     'furniture 3PL',
     'fitness equipment shipping',
     'freight logistics platform',
@@ -28,17 +26,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Shipping Cow — Moo-ve Heavy Goods Without Getting Milked',
     description:
-      'Enterprise logistics rates for mid-market heavy goods sellers. Up to 80% off FedEx. 2-day guaranteed. AI-powered back office.',
+      'DIM 225 billing, pooled enterprise FedEx rates, zone-skipping. Typically 15–20% lower all-in cost on 50–149 lb parcels.',
     type: 'website',
-    url: 'https://shippingcow.ai',
     images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ShippingCow — Heavy Goods Fulfillment with DIM 225 Pricing',
-    description: 'DIM 225 pricing. 80% off FedEx rates. Zero shrinkage. 2-day delivery to 92% of the US.',
+    title: 'ShippingCow — 3PL for 50–149 lb Parcels',
+    description: 'DIM 225 billing vs carriers’ 139. Pooled enterprise FedEx rates. Zone-skipping to 92% of the US.',
     images: ['/opengraph-image'],
   },
+  alternates: { canonical: './' },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || '',
   },

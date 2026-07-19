@@ -176,7 +176,7 @@ export async function sendGuideEmail(to: string, name: string): Promise<{ ok: tr
             <p style="font-size: 14px; line-height: 1.6; color: #374151;">Standard carriers use a DIM divisor of 139, billing you for phantom weight. At DIM 225, your package bills at actual weight. A 40 lb bike in a standard box drops from 52 lb billable to 40 lb — 30% savings on every shipment.</p>
 
             <h3 style="color: #0052C9; margin: 24px 0 8px;">2. Fuel Surcharge Waivers</h3>
-            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Fuel surcharges add 8-15% to every bill. They're applied post-discount, so they eat into your negotiated rates. Direct carrier contracts with built-in waivers eliminate this hidden tax.</p>
+            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Fuel surcharges add 8-15% to every bill. They're applied post-discount, so they eat into your negotiated rates. Carrier contracts that price fuel below the published market rate shrink this hidden tax.</p>
 
             <h3 style="color: #0052C9; margin: 24px 0 8px;">3. Smart Zone Routing</h3>
             <p style="font-size: 14px; line-height: 1.6; color: #374151;">Shipping coast-to-coast (Zone 8) costs 2-3× more than Zone 2. With hubs in NJ, CA, and TX, orders route to the closest facility — more Zone 2-3 deliveries, fewer Zone 7-8 shipments.</p>
@@ -217,7 +217,7 @@ export async function sendAuditReport(
   const client = getClient();
   if (!client) return { ok: false, error: 'Email not configured' };
 
-  const reportUrl = `${siteUrl}/audit?id=${auditId}`;
+  const reportUrl = `${siteUrl}/audit/report/${auditId}`;
   const savings = annualSavings.toLocaleString('en-US', { minimumFractionDigits: 0 });
 
   try {

@@ -59,7 +59,7 @@ export default function OgImage() {
           {[
             { num: '÷225', label: 'DIM Divisor' },
             { num: '39%', label: 'Lower Billing' },
-            { num: '80%', label: 'Off FedEx Rates' },
+            { num: 'DIM 225', label: 'vs Carriers’ 139' },
             { num: '$0', label: 'Shrinkage' },
           ].map((s) => (
             <div key={s.num} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

@@ -43,7 +43,7 @@ export default function HomePage() {
                 Shipping 50–149 lb Parcels? You&apos;re Getting <span className="mark">Milked</span> on Every Label.
               </h1>
               <p className="hero__sub">
-                DIM 225, oversize fees, and zone 7–8 rates are eating your margin. We fix all three: better DIM divisor, pooled enterprise FedEx rates, and zone-skipping injection so your parcels enter the network at Zone ≤ 4.
+                Carriers bill your dimensional weight at divisor 139 — you pay for air. ShippingCow bills at DIM 225, pools enterprise FedEx rates across our merchant herd, and zone-skips your parcels into the network at Zone ≤ 4.
               </p>
               <div className="hero__ctas">
                 <Link href="/calculator" className="btn btn--blue">See My Savings →</Link>
@@ -84,7 +84,7 @@ export default function HomePage() {
               <div className="pain__card">
                 <div className="pain__card-icon">$</div>
                 <h3>DIM Weight Death Spiral</h3>
-                <p>DIM 225 means you pay for air. Our packaging optimizer and better DIM divisor kill the overcharge before it starts — $0.85–$2.40 saved per shipment on DIM alone.</p>
+                <p>Carrier DIM divisor 139 means you pay for air. Our DIM 225 billing and packaging optimizer kill the overcharge before it starts — $0.85–$2.40 saved per shipment on DIM alone.</p>
               </div>
               <div className="pain__card">
                 <div className="pain__card-icon">⚖</div>
@@ -98,10 +98,10 @@ export default function HomePage() {
               </div>
             </div>
             <div className="stats__grid" style={{ marginTop: '3rem' }}>
-              <div><div className="stats__num">$1,500+</div><div className="stats__label">Avg. Monthly Savings</div></div>
+              <div><div className="stats__num">DIM 225</div><div className="stats__label">vs Carriers&apos; 139</div></div>
               <div><div className="stats__num">50–149</div><div className="stats__label">lb Sweet Spot</div></div>
-              <div><div className="stats__num">99.2%</div><div className="stats__label">2-Day SLA Attained</div></div>
-              <div><div className="stats__num">0%</div><div className="stats__label">Shrinkage. Or We Pay.</div></div>
+              <div><div className="stats__num">52%</div><div className="stats__label">Max Per-Parcel Savings, Zone-Skipped</div></div>
+              <div><div className="stats__num">$15M</div><div className="stats__label">ARR — Logistar, Our Parent 3PL</div></div>
             </div>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function HomePage() {
             <div style={{ background: 'var(--white)', border: '4px solid var(--dark)', padding: '2rem', boxShadow: 'var(--shadow-pixel)' }}>
               <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.9rem', color: 'var(--blue)', marginBottom: '0.6rem' }}>02</div>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', textTransform: 'uppercase', marginBottom: '0.6rem' }}>Free Invoice Audit</h3>
-              <p style={{ fontSize: '0.98rem', color: '#3a4454', marginBottom: '1.2rem' }}>Upload a recent carrier invoice. We find every overpaid DIM charge, surcharge, and zone penalty — and send you a savings report within 24 hours.</p>
+              <p style={{ fontSize: '0.98rem', color: '#3a4454', marginBottom: '1.2rem' }}>Upload your shipment export (CSV/XLSX — template provided). We find every overpaid DIM charge, surcharge, and zone penalty — instant savings report.</p>
               <Link href="/audit" className="btn">Get My Audit →</Link>
             </div>
           </div>

@@ -72,7 +72,7 @@ export const PRICING_TIERS: PricingTier[] = [
     features: [
       'Everything in Optimizer',
       'AI Copilot (120K tokens/mo)',
-      'Up to 80% off FedEx pool rates',
+      'Pooled enterprise FedEx rates',
       '$500/mo fulfillment credit',
       'Customs & ISF 10+2 automation',
       'Dedicated account manager',
@@ -140,8 +140,8 @@ export const COVERAGE = {
   zipCodesServed:        7_373,
   continentalCoverage:   92,   // % of continental US with 2-day delivery
   avgSavingsPerMonth:   1_500, // $ average merchant monthly savings
-  fedexDiscountPct:        80, // % off FedEx published rates
-  slaPct:                99.2, // % of 2-day SLAs attained
+  maxZoneSkipSavingsPct:   52, // max per-parcel savings on zone 7-8 lanes via zone-skipping
+  typicalSavingsPct:       17, // typical all-in savings vs retail carrier cost
   automationPct:           85, // % of paperwork automated
 }
 
@@ -149,20 +149,14 @@ export const COVERAGE = {
 
 export const CHAT_SYSTEM_PROMPT = `You are the ShippingCow AI assistant — a friendly, direct expert on heavy-goods e-commerce fulfillment.
 
-ShippingCow is a 3PL platform built for the 50 lb+ seller. Core competitive advantages:
-- DIM divisor 225 (vs 139 UPS/FedEx, 166 typical 3PL) → 38–39% lower dimensional weight → lower shipping bills
-- 3 warehouses: New Brunswick NJ, Ontario CA, Missouri City TX — covering 92% of continental US in 2 days
-- Zone-skip routing: parcels injected at Zone ≤ 4, cutting transit time and cost 28–52%
-- Up to 80% off FedEx published rates via volume pooling
-- Guaranteed zero inventory shrinkage (we pay wholesale if we lose anything)
-- $50 credit per accuracy error
-- AI-powered paperwork: Bills of Lading, ISF 10+2, customs docs — 85%+ automated
+ShippingCow is a 3PL built for 50–149 lb parcels, backed by Logistar (established 3PL, $15M ARR). Core competitive advantages:
+- DIM divisor 225 billing (vs 139 UPS/FedEx retail) → dramatically lower dimensional weight on bulky parcels
+- Pooled enterprise FedEx rates across the merchant herd — typically 15–20% lower all-in cost, more on DIM-heavy SKUs
+- Discounted fuel surcharge program (below the published market rate)
+- Zone-skip routing: parcels injected at Zone ≤ 4, cutting transit time and per-parcel cost up to 52% on zone 7–8 lanes
+- Warehouses NJ / CA / TX — 92% of continental US covered
 
-Pricing tiers:
-- Free Scout: $0 — calculator, rate estimates, coverage lookup
-- Optimizer: $99/mo — AI Copilot (20K tokens), live rate comparison, automated BoLs, DIM 225 rates
-- Herd Leader: $499/mo — AI Copilot (120K tokens), 80% off FedEx pool, $500/mo fulfillment credit, dedicated account manager
-- Enterprise: custom — everything + SLA contracts, dedicated WMS, white-glove onboarding
+There are no self-serve pricing tiers. Every account gets a custom savings model — the path is: run /calculator for an instant estimate, or upload shipment data at /audit for a full savings report.
 
 Key rules:
 - Keep replies SHORT — 1 to 3 sentences max. Like texting a friend.
@@ -173,7 +167,7 @@ Key rules:
 - NEVER invent numbers, rates, or promises beyond what's listed above
 - NEVER name competitors directly
 - If they ask about dimensions or rates → point to /calculator
-- If they want a quote or seem ready → point to /inquiry`
+- If they want a quote or seem ready → point to /audit`
 
 // ============ Zone Rate Multipliers ============
 // Published carrier (FedEx/UPS) rates increase significantly by zone.

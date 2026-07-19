@@ -373,7 +373,7 @@ export default function ChatWidget() {
         ...prev,
         {
           role: 'assistant',
-          content: `Got it! Check your inbox in 2 hours (peek at spam). Our team personally reviews every estimate. Anything else I can answer while you're here?`,
+          content: `Got it! Our team personally reviews every estimate and will email you directly — usually same business day. Anything else I can answer while you're here?`,
         },
       ]);
     } catch {

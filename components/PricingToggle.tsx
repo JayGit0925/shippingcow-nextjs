@@ -29,7 +29,7 @@ const TIERS = [
     monthly: '$499',
     annual: '$399',
     badge: '★ Best Value',
-    features: ['Everything in Optimizer', '80% off FedEx volume pool', '120K AI tokens / month', 'Full fulfillment credit', 'Priority support, 4hr SLA'],
+    features: ['Everything in Optimizer', 'Pooled enterprise FedEx rates', '120K AI tokens / month', 'Full fulfillment credit', 'Priority support, 4hr SLA'],
     cta: 'Join the Herd',
     variant: 'blue' as const,
     featured: true,

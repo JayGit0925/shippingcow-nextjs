@@ -23,7 +23,7 @@ export default function JsonLd() {
         url: siteUrl,
         name: 'Shipping Cow',
         description:
-          'Heavy goods 3PL & e-commerce fulfillment — cut shipping costs up to 80% with DIM 225 pricing.',
+          '3PL for 50–149 lb parcels — DIM 225 billing, pooled enterprise FedEx rates, zone-skipping.',
         publisher: { '@id': `${siteUrl}/#organization` },
       },
     ],

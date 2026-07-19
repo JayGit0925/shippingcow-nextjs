@@ -107,17 +107,17 @@ function Bar({ value, max, color, label, billable: bill, isBest }: {
 export default function DimCalculator() {
   const searchParams = useSearchParams();
 
-  const [length, setLength]   = useState(() => Number(searchParams.get('l'))      || 24);
-  const [width,  setWidth]    = useState(() => Number(searchParams.get('w'))      || 18);
-  const [height, setHeight]   = useState(() => Number(searchParams.get('h'))      || 16);
-  const [weight, setWeight]   = useState(() => Number(searchParams.get('weight')) || 55);
+  const [length, setLength]   = useState(() => Number(searchParams.get('l'))      || 30);
+  const [width,  setWidth]    = useState(() => Number(searchParams.get('w'))      || 24);
+  const [height, setHeight]   = useState(() => Number(searchParams.get('h'))      || 20);
+  const [weight, setWeight]   = useState(() => Number(searchParams.get('weight')) || 45);
   const [volume, setVolume]   = useState(() => Number(searchParams.get('vol'))    || 100);
   const [results, setResults] = useState<Results>(() =>
     calcResults(
-      Number(searchParams.get('l'))      || 24,
-      Number(searchParams.get('w'))      || 18,
-      Number(searchParams.get('h'))      || 16,
-      Number(searchParams.get('weight')) || 55,
+      Number(searchParams.get('l'))      || 30,
+      Number(searchParams.get('w'))      || 24,
+      Number(searchParams.get('h'))      || 20,
+      Number(searchParams.get('weight')) || 45,
       Number(searchParams.get('vol'))    || 100,
     )
   );

@@ -17,7 +17,7 @@ const FALLBACK_CHUNKS: KbChunk[] = [
   },
   {
     source: 'pricing',
-    content: 'Pricing: Free Scout ($0). Optimizer ($99/mo) — AI Copilot, live rates, DIM 225 rates. Herd Leader ($499/mo) — 80% off FedEx, $500/mo credit, dedicated account manager. Enterprise (custom) — SLA, white-glove.',
+    content: 'Pricing: no self-serve tiers — every account gets a custom savings model. Path: /calculator for an instant estimate, /audit for a full savings report from real shipment data.',
     keywords: ['price', 'pricing', 'cost', 'plan', 'tier', 'monthly', 'optimizer', 'herd leader', 'enterprise', 'free'],
   },
   {
@@ -27,7 +27,7 @@ const FALLBACK_CHUNKS: KbChunk[] = [
   },
   {
     source: 'savings',
-    content: 'Customers save 40–80% vs standard carriers. Three levers: DIM 225 reduces billable weight 38%, volume pooling unlocks enterprise FedEx rates, zone-skip routing cuts distance. Use /calculator for exact estimate.',
+    content: 'Customers typically save 15–20% all-in vs retail carrier cost, up to 52% per parcel on zone 7–8 lanes. Three levers: DIM 225 billing reduces billable weight on bulky parcels, volume pooling unlocks enterprise FedEx rates, zone-skip routing cuts distance. Use /calculator for an exact estimate.',
     keywords: ['save', 'savings', 'discount', 'rate', 'cost', 'reduce', 'cheaper', 'how much'],
   },
   {

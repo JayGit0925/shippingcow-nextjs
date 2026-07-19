@@ -24,7 +24,7 @@ That's a 30% savings on every shipment before any other optimization.`,
 
 A quote for $55 often becomes $82 after fuel surcharge, residential delivery fee, and peak season demand charges. Most shippers don't realize this until the bill arrives.
 
-The fix: work with a 3PL that has a direct carrier contract with fuel surcharge waivers built in. This alone can save 8-15% on every shipment.`,
+The fix: work with a 3PL whose carrier contract prices fuel surcharge below the published market rate. This alone can save meaningfully on every shipment.`,
     stat: 'Up to 15% of your shipping bill = fuel surcharges alone',
   },
   {
@@ -105,7 +105,7 @@ export default function GuidePage() {
             The Heavy Parcel <span className="text-yellow">Cost-Saving Guide</span>
           </h1>
           <p className="guide-hero__sub">
-            How DIM 225, fuel surcharge waivers, and smart zone routing can cut your
+            How DIM 225, a discounted fuel surcharge program, and smart zone routing can cut your
             shipping costs by 30% or more.
           </p>
 

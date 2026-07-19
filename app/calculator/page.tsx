@@ -70,10 +70,10 @@ export default function CalculatorPage() {
 
           <div style={{ marginTop: '2rem', background: 'var(--blue)', color: '#fff', padding: '1.5rem 2rem', border: '4px solid var(--dark)', boxShadow: 'var(--shadow-pixel-lg)' }}>
             <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}>
-              <strong>Example:</strong> A 24×18×16 box that weighs 55 lbs.{' '}
-              UPS/FedEx DIM: <strong>49.8 lbs</strong> → billable: <strong>55 lbs</strong>.{' '}
-              ShippingCow DIM: <strong>30.7 lbs</strong> → billable: <strong>55 lbs</strong>.{' '}
-              At 80+ lbs the savings are dramatic — try a heavy package in the calculator above.
+              <strong>Example:</strong> A 30×24×20 box that weighs 45 lbs.{' '}
+              UPS/FedEx DIM: <strong>103.6 lbs billable</strong>.{' '}
+              ShippingCow DIM: <strong>64 lbs billable</strong> — 39.6 lbs you stop paying for.{' '}
+              The bulkier the box relative to its weight, the bigger the DIM win. Dense heavy parcels save through our net rates, fuel program, and zone-skipping instead — run yours above.
             </p>
           </div>
         </div>
@@ -84,8 +84,8 @@ export default function CalculatorPage() {
         subtext="Submit your top SKU dimensions and we'll build a custom savings model — no commitment, 24-hour turnaround."
         primaryLabel="Get my free savings estimate →"
         primaryHref="/inquiry"
-        secondaryLabel="See Big & Bulky rates"
-        secondaryHref="/big-and-bulky"
+        secondaryLabel="Upload shipment data — full audit"
+        secondaryHref="/audit"
       />
     </>
   );
