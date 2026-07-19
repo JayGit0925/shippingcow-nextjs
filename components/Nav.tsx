@@ -36,15 +36,9 @@ export default function Nav() {
         </Link>
 
         <ul className="nav__links">
-          <li><Link href="/" className={pathname === '/' ? 'active' : ''} onClick={() => setOpen(false)}>Home</Link></li>
-          <li><Link href="/#cow-guaranteed" onClick={() => setOpen(false)}>Cow-Guaranteed</Link></li>
-          <li><Link href="/#services" onClick={() => setOpen(false)}>Services</Link></li>
-          <li><Link href="/big-and-bulky" className={pathname === '/big-and-bulky' ? 'active' : ''} onClick={() => setOpen(false)}>Big &amp; Bulky</Link></li>
           <li><Link href="/calculator" className={pathname === '/calculator' ? 'active' : ''} onClick={() => setOpen(false)}>Calculator</Link></li>
           <li><Link href="/audit" className={pathname === '/audit' ? 'active' : ''} onClick={() => setOpen(false)}>Free Audit</Link></li>
-          <li><Link href="/blog" className={pathname.startsWith('/blog') ? 'active' : ''} onClick={() => setOpen(false)}>Blog</Link></li>
           <li><Link href="/track" className={pathname === '/track' ? 'active' : ''} onClick={() => setOpen(false)}>Track</Link></li>
-          <li><Link href="/inquiry" className={pathname === '/inquiry' ? 'active' : ''} onClick={() => setOpen(false)}>Inquiry</Link></li>
         </ul>
 
         <div className="nav__right">
@@ -54,10 +48,7 @@ export default function Nav() {
               <button onClick={logout} className="btn btn--sm btn--ghost">Log Out</button>
             </>
           ) : loaded ? (
-            <>
-              <Link href="/login" className="nav__user">Log In</Link>
-              <Link href="/signup" className="btn btn--sm">Sign Up</Link>
-            </>
+            <Link href="/login" className="nav__user">Log In</Link>
           ) : null}
         </div>
 

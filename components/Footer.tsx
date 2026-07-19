@@ -18,22 +18,10 @@ export default function Footer() {
           <div>
             <h4>Platform</h4>
             <ul>
-              <li><Link href="/#services">Services</Link></li>
-              <li><Link href="/#cow-guaranteed">Guarantees</Link></li>
-              <li><Link href="/#pricing">Pricing</Link></li>
-              <li><Link href="/calculator">DIM Calculator</Link></li>
-              <li><Link href="/big-and-bulky">Big &amp; Bulky</Link></li>
+              <li><Link href="/calculator">Savings Calculator</Link></li>
+              <li><Link href="/audit">Free Invoice Audit</Link></li>
               <li><Link href="/track">Track Package</Link></li>
               <li><Link href="/blog">Blog</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4>Company</h4>
-            <ul>
-              <li><Link href="/#about">About Us</Link></li>
-              <li><Link href="/inquiry">Contact</Link></li>
-              <li><Link href="/inquiry">Get a Quote</Link></li>
             </ul>
           </div>
 
@@ -41,9 +29,8 @@ export default function Footer() {
             <h4>Account</h4>
             <ul>
               <li><Link href="/login">Log In</Link></li>
-              <li><Link href="/signup">Sign Up</Link></li>
               <li><Link href="/dashboard">Dashboard</Link></li>
-              <li><Link href="/inquiry">Free Audit</Link></li>
+              <li><Link href="/inquiry">Contact</Link></li>
             </ul>
           </div>
         </div>
