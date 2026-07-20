@@ -1,3 +1,5 @@
+> Part of Jay's Logistar / ShippingCow system. The brain: [logsitar](https://github.com/JayGit0925/logsitar) · Profile: [github.com/JayGit0925](https://github.com/JayGit0925)
+
 # ShippingCow — Next.js Fulfillment Routing SaaS
 
 ShippingCow helps e-commerce sellers reduce shipping costs by routing every order through the cheapest qualified carrier in real time. Built with Next.js 14 App Router, SQLite (dev) or Postgres (prod), Tailwind CSS, and LiteLLM for the AI chat widget.
