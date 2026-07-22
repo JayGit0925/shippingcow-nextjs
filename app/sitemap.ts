@@ -1,9 +1,10 @@
+import { SITE_URL } from '@/lib/site';
 import { type MetadataRoute } from 'next';
 import { getAllPosts } from '@/lib/blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || 'https://shippingcow.ai';
+    SITE_URL;
 
   const staticRoutes = [
     { path: '', priority: 1.0, changeFreq: 'weekly' as const },

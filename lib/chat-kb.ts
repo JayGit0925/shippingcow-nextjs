@@ -11,9 +11,9 @@ export type KbChunk = {
 // Fallback in-memory chunks — used if DB is unavailable
 const FALLBACK_CHUNKS: KbChunk[] = [
   {
-    source: 'dim225',
-    content: 'ShippingCow uses DIM divisor 225 vs 139 (UPS/FedEx) or 166 (typical 3PL). A 24x18x12 box at 30 lbs: DIM 139 = 45 lbs billable, DIM 225 = 28 lbs billable. That 38% reduction lowers your shipping bill directly.',
-    keywords: ['dim', 'dimensional', 'weight', 'divisor', '225', '139', '166', 'billable'],
+    source: 'dim_billing',
+    content: 'Carriers turn box size into billable weight with a DIM divisor. UPS/FedEx publish 139 for ground; a typical 3PL uses 166. A 24x18x12 box at 30 lbs bills as 45 lbs at divisor 139 — 15 lbs of phantom weight. ShippingCow does not publish its own divisor: we quote against your real SKU mix and lanes. Use /calculator to see what you are billed for today, and /audit to have us price it.',
+    keywords: ['dim', 'dimensional', 'weight', 'divisor', '139', '166', 'billable'],
   },
   {
     source: 'pricing',
@@ -22,18 +22,18 @@ const FALLBACK_CHUNKS: KbChunk[] = [
   },
   {
     source: 'warehouses',
-    content: '3 fulfillment centers: New Brunswick NJ, Ontario CA, Missouri City TX. 92% of continental US in 2-day ground. Zone-skip routing cuts cost 28–52%.',
-    keywords: ['warehouse', 'location', 'new jersey', 'california', 'texas', 'coverage', 'zone', '2-day'],
+    content: '3 self-operated fulfillment centers: New Brunswick NJ, Ontario CA, Missouri City TX. Inventory is split across East, Central and West so orders ship from the closest warehouse at the lowest available FedEx zone. We do not publish a transit-day guarantee — ask us about your specific lanes.',
+    keywords: ['warehouse', 'location', 'new jersey', 'california', 'texas', 'coverage', 'zone', 'transit'],
   },
   {
     source: 'savings',
-    content: 'Customers typically save 15–20% all-in vs retail carrier cost, up to 52% per parcel on zone 7–8 lanes. Three levers: DIM 225 billing reduces billable weight on bulky parcels, volume pooling unlocks enterprise FedEx rates, zone-skip routing cuts distance. Use /calculator for an exact estimate.',
-    keywords: ['save', 'savings', 'discount', 'rate', 'cost', 'reduce', 'cheaper', 'how much'],
+    content: 'We do not publish savings percentages — a number that ignores your zones and SKU mix is a number that lies. Three levers actually move your cost: dimensional weight on bulky parcels, volume pooling into enterprise FedEx rates, and zone-skip routing that shortens the lane. Use /calculator to see what your carrier bills you for today, and /audit to have us price your real shipments.',
+    keywords: ['save', 'savings', 'discount', 'rate', 'cost', 'reduce', 'cheaper', 'how much', 'percent'],
   },
   {
-    source: 'guarantees',
-    content: 'Zero inventory shrinkage guarantee — we pay wholesale replacement if anything lost or damaged. $50 credit per picking accuracy error. 2-day delivery to 92% of US.',
-    keywords: ['guarantee', 'shrinkage', 'damage', 'lost', 'accuracy', 'sla', 'promise', 'insurance'],
+    source: 'service_levels',
+    content: 'Service commitments are set per account in the agreement, not advertised on the website. If you need specific SLA language on accuracy, damage, or transit time, ask and we will put it in writing for your volume.',
+    keywords: ['guarantee', 'damage', 'lost', 'accuracy', 'sla', 'promise', 'insurance'],
   },
   {
     source: 'carriers',
@@ -42,22 +42,22 @@ const FALLBACK_CHUNKS: KbChunk[] = [
   },
   {
     source: 'icp',
-    content: 'Built for e-commerce sellers shipping 50–500 lb items (furniture, fitness equipment, power tools, outdoor gear). Minimum: 200 shipments/month. Best fit: $50K+/mo shipping spend.',
+    content: 'Built for US e-commerce brands shipping heavy DTC parcels in the 50–149 lb band (furniture, fitness equipment, power tools, outdoor gear). Fit and minimums are set per account — tell us your monthly volume and we will tell you straight whether we are the right home for it.',
     keywords: ['who', 'fit', 'minimum', 'volume', 'furniture', 'fitness', 'equipment', 'amazon', 'tiktok', 'seller'],
   },
   {
-    source: 'ai_paperwork',
-    content: 'Automates Bills of Lading, ISF 10+2 filings, customs docs, commercial invoices. 85%+ fully automated. Included in Optimizer and Herd Leader plans.',
-    keywords: ['paperwork', 'bol', 'bill of lading', 'isf', 'customs', 'automate', 'ai'],
+    source: 'paperwork',
+    content: 'Outbound shipping paperwork — Bills of Lading, labels, manifests, commercial invoices for domestic moves — is generated for you. Ask your account contact about anything beyond the US warehouse leg; we do not scope that on the website.',
+    keywords: ['paperwork', 'bol', 'bill of lading', 'label', 'manifest', 'document'],
   },
   {
     source: 'process',
-    content: 'How it works: Send inventory to nearest warehouse → received + counted in 24h → orders flow via API or CSV → we pick, pack, inject at optimal zone → AI handles all paperwork.',
+    content: 'How it works: Send inventory to the nearest warehouse → received and counted → orders flow in via API or CSV → we pick, pack, and inject at the optimal zone → shipping paperwork is generated for you.',
     keywords: ['how', 'process', 'works', 'onboard', 'start', 'inventory', 'receive', 'pick', 'pack'],
   },
   {
     source: 'tiktok_amazon',
-    content: 'Supports Amazon SFP (Seller Fulfilled Prime) and TikTok Shop dispatch. 2-day SLA meets Prime standards. Automated labels and manifests for both platforms.',
+    content: 'Supports Amazon SFP (Seller Fulfilled Prime) and TikTok Shop dispatch, with automated labels and manifests for both platforms. Whether your specific lanes clear Prime transit standards is checked against your ZIP mix — we do not blanket-promise it.',
     keywords: ['amazon', 'tiktok', 'prime', 'sfp', 'seller fulfilled', 'marketplace'],
   },
 

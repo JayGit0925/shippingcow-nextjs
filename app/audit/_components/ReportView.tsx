@@ -21,7 +21,8 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
     pct_within_zone_5,
     avg_billable_weight_139,
     avg_billable_weight_225,
-    dim_weight_reduction_pct,
+    // dim_weight_reduction_pct is intentionally NOT displayed — no savings
+    // percentage on any user-facing surface (Jay, 2026-07-22).
     warehouse_distribution,
     total_inbound_fees,
     total_handling_fees,
@@ -147,11 +148,12 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
             </div>
           </Section>
 
-          <Section title="DIM Weight Savings">
+          <Section title="Billable Weight">
             <div style={{marginTop: '2rem'}}>
               <p style={{fontSize: '1.05rem', marginBottom: '1.5rem'}}>
-                Your average billable weight drops from <strong>{avg_billable_weight_139.toFixed(1)} lbs</strong> to <strong>{avg_billable_weight_225.toFixed(1)} lbs</strong>{' '}
-                <span style={{color: 'var(--blue)', fontWeight: 700}}>({dim_weight_reduction_pct.toFixed(1)}% reduction)</span>
+                Your average billable weight today, at your carrier&apos;s published DIM divisor of 139, is{' '}
+                <strong>{avg_billable_weight_139.toFixed(1)} lbs</strong>. Under ShippingCow it becomes{' '}
+                <strong>{avg_billable_weight_225.toFixed(1)} lbs</strong>.
               </p>
               <ComparisonBar before={avg_billable_weight_139} after={avg_billable_weight_225} />
             </div>
@@ -329,14 +331,14 @@ function ComparisonBar({before, after}: {before: number; after: number}) {
   return (
     <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem'}}>
       <div>
-        <div style={{fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem'}}>Current (DIM 139)</div>
+        <div style={{fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem'}}>Your carrier today (published DIM 139)</div>
         <div style={{height: '40px', background: '#E5E7EB', borderRadius: '4px', overflow: 'hidden'}}>
           <div style={{height: '100%', background: 'var(--blue)', width: `${(before / max) * 100}%`}} />
         </div>
         <div style={{fontSize: '1rem', fontWeight: 700, marginTop: '0.5rem'}}>{before.toFixed(1)} lbs</div>
       </div>
       <div>
-        <div style={{fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem'}}>ShippingCow (DIM 225)</div>
+        <div style={{fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem'}}>ShippingCow</div>
         <div style={{height: '40px', background: '#E5E7EB', borderRadius: '4px', overflow: 'hidden'}}>
           <div style={{height: '100%', background: '#059669', width: `${(after / max) * 100}%`}} />
         </div>

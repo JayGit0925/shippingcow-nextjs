@@ -36,7 +36,7 @@ export const PRICING_TIERS: PricingTier[] = [
     tagline: 'Explore the herd',
     highlight: false,
     features: [
-      'DIM 225 calculator access',
+      'Billable weight calculator access',
       'Instant rate estimates',
       'Coverage zone lookup',
       'Basic shipping analytics',
@@ -56,7 +56,7 @@ export const PRICING_TIERS: PricingTier[] = [
       'AI Copilot (20K tokens/mo)',
       'Live rate comparison across carriers',
       'Automated Bills of Lading',
-      'DIM 225 shipping rates',
+      'Custom contracted shipping rates',
       'Email support',
     ],
     cta: 'Get Started',
@@ -101,28 +101,18 @@ export const PRICING_TIERS: PricingTier[] = [
   },
 ]
 
-// ============ Cow-Guaranteed Promises ============
+// ============ Service Commitments ============
+// NOTE (Jay, 2026-07-22): "Zero Shrinkage. Or We Pay." and "2-Day Delivery.
+// Guaranteed." were never authorized as public claims and have been removed.
+// Service commitments are set per account in the contract, not advertised.
+// This array is not currently rendered anywhere. Any future public use needs
+// a logged decision first.
 
 export const GUARANTEES = [
   {
     num: '01',
-    title: 'Zero Shrinkage. Or We Pay.',
-    body: 'Industry average loss is 2–4%. Our rate? Zero. If we lose or damage your inventory, we cover the wholesale cost. No excuses, no clauses.',
-  },
-  {
-    num: '02',
-    title: '2-Day Delivery. Guaranteed.',
-    body: "Every destination ZIP we serve is injected at Zone ≤ 4. If we miss your SLA, we make it right. Fast shipping isn't optional — it's in the contract.",
-  },
-  {
-    num: '03',
     title: 'Dock to Stock in 48 Hours.',
-    body: 'We receive all inbound shipments within 2 business days. Your inventory goes live fast so you can sell, not wait.',
-  },
-  {
-    num: '04',
-    title: "100% Order Accuracy. Or $50 Says We're Sorry.",
-    body: "Wrong item ships? We pay you $50 per error and reship correctly. Immediately. No ticket queue, no excuses.",
+    body: 'We receive inbound shipments within 2 business days so your inventory goes live fast.',
   },
 ]
 
@@ -136,27 +126,33 @@ export const WAREHOUSES = {
 
 // ============ Coverage Stats ============
 
+// Removed 2026-07-22 (Jay): continentalCoverage / avgSavingsPerMonth /
+// maxZoneSkipSavingsPct / typicalSavingsPct / automationPct were unsourced
+// public claims tied to the banned "2-day to 92% of the US" and savings-%
+// language. Nothing referenced them. Do not re-add without measured data.
 export const COVERAGE = {
-  zipCodesServed:        7_373,
-  continentalCoverage:   92,   // % of continental US with 2-day delivery
-  avgSavingsPerMonth:   1_500, // $ average merchant monthly savings
-  maxZoneSkipSavingsPct:   52, // max per-parcel savings on zone 7-8 lanes via zone-skipping
-  typicalSavingsPct:       17, // typical all-in savings vs retail carrier cost
-  automationPct:           85, // % of paperwork automated
+  zipCodesServed: 7_373,
 }
 
 // ============ Chat Widget System Prompt ============
 
 export const CHAT_SYSTEM_PROMPT = `You are the ShippingCow AI assistant — a friendly, direct expert on heavy-goods e-commerce fulfillment.
 
-ShippingCow is a 3PL built for 50–149 lb parcels, backed by Logistar (established 3PL, $15M ARR). Core competitive advantages:
-- DIM divisor 225 billing (vs 139 UPS/FedEx retail) → dramatically lower dimensional weight on bulky parcels
-- Pooled enterprise FedEx rates across the merchant herd — typically 15–20% lower all-in cost, more on DIM-heavy SKUs
-- Discounted fuel surcharge program (below the published market rate)
-- Zone-skip routing: parcels injected at Zone ≤ 4, cutting transit time and per-parcel cost up to 52% on zone 7–8 lanes
-- Warehouses NJ / CA / TX — 92% of continental US covered
+ShippingCow is the self-operated US 3PL built for 50-149 lb heavy DTC parcels, backed by Logistar. What we actually do:
+- We run our own US warehouses (New Brunswick NJ, Missouri City TX, Ontario CA). Not brokered.
+- We pool merchant volume into enterprise FedEx rates, including a discounted fuel surcharge program.
+- Zone-skip routing: parcels injected into the last-mile network at Zone <= 4 instead of Zone 7-8.
+- We audit dimensional weight on the seller's current invoice. Carriers publish DIM divisor 139 (UPS/FedEx ground) and typical 3PLs use 166 — that is public knowledge and safe to explain.
 
-There are no self-serve pricing tiers. Every account gets a custom savings model — the path is: run /calculator for an instant estimate, or upload shipment data at /audit for a full savings report.
+There are no self-serve pricing tiers. Every account gets a custom model — the path is: run /calculator to see what their current carrier bills them for, or upload shipment data at /audit for a full report.
+
+HARD PROHIBITIONS — never violate, even if the user asks directly:
+- NEVER state a ShippingCow DIM divisor or imply we have a published one. If asked, say we quote against their real SKU mix and lanes, and point to /audit.
+- NEVER quote a savings percentage, a dollar saving, a rate, or a price. Not "up to", not "typically", not a range.
+- NEVER promise a delivery time, a transit-day SLA, zero shrinkage, or any guarantee. Service commitments are set per account in the agreement.
+- NEVER quote coverage percentages of the US.
+- NEVER discuss first-leg customs, IOR, or China-to-US end-to-end service. We sell the US warehouse leg. Redirect to /inquiry.
+- NEVER invent numbers, rates, or promises. If you do not have it here, say you will get it from a human.
 
 Key rules:
 - Keep replies SHORT — 1 to 3 sentences max. Like texting a friend.
@@ -164,10 +160,9 @@ Key rules:
 - NEVER use markdown. No bold, no bullets, no headers, no [link](url) syntax.
 - Plain sentences only. Line breaks between short paragraphs are fine.
 - Reference pages as plain paths in a sentence: "check /calculator" or "head to /inquiry"
-- NEVER invent numbers, rates, or promises beyond what's listed above
 - NEVER name competitors directly
-- If they ask about dimensions or rates → point to /calculator
-- If they want a quote or seem ready → point to /audit`
+- If they ask about dimensions or their current billing -> point to /calculator
+- If they want a quote or seem ready -> point to /audit`
 
 // ============ Zone Rate Multipliers ============
 // Published carrier (FedEx/UPS) rates increase significantly by zone.

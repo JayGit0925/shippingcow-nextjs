@@ -6,16 +6,16 @@ import FinalCTA from '@/components/FinalCTA';
 
 const SECTIONS = [
   {
-    id: 'dim-225',
-    title: 'What Is DIM 225 — and Why Does It Matter?',
+    id: 'dim-weight',
+    title: 'What Is DIM Weight — and Why Does It Matter?',
     content: `DIM (dimensional weight) pricing is how carriers bill for the space your package takes up in a truck, not just how much it weighs.
 
-The standard DIM divisor is 139. That means every cubic foot of space is billed as if it weighs 139 lbs. For a 40 lb bike in a box that's 4 cubic feet: you're billed for 52 lbs — 12 lbs of phantom weight.
+The published UPS/FedEx ground DIM divisor is 139. That means every cubic foot of space is billed as if it weighs 139 lbs. For a 40 lb bike in a box that's 4 cubic feet: you're billed for 52 lbs — 12 lbs of phantom weight you never shipped.
 
-DIM 225 flips this. At 225 divisor, that same bike bills at its actual 40 lbs.
+That penalty was designed for light, oversized boxes. Applied to a dense 50–149 lb product, it just inflates the bill.
 
-That's a 30% savings on every shipment before any other optimization.`,
-    stat: '30% average savings vs standard DIM 139 pricing',
+Step one is knowing the number. Run your own boxes through our calculator, then let us audit the invoice.`,
+    stat: 'Published UPS/FedEx ground DIM divisor: 139',
   },
   {
     id: 'fuel-surcharge',
@@ -25,7 +25,7 @@ That's a 30% savings on every shipment before any other optimization.`,
 A quote for $55 often becomes $82 after fuel surcharge, residential delivery fee, and peak season demand charges. Most shippers don't realize this until the bill arrives.
 
 The fix: work with a 3PL whose carrier contract prices fuel surcharge below the published market rate. This alone can save meaningfully on every shipment.`,
-    stat: 'Up to 15% of your shipping bill = fuel surcharges alone',
+    stat: 'Fuel surcharge is applied after your discounts — check it first',
   },
   {
     id: 'zone-routing',
@@ -34,8 +34,8 @@ The fix: work with a 3PL whose carrier contract prices fuel surcharge below the 
 
 With fulfillment hubs in NJ-08901, CA-91761, and TX-77489, Shipping Cow automatically routes each order to the closest hub.
 
-This means more Zone 2-3 deliveries and fewer Zone 7-8 shipments. Combined with DIM 225 pricing, the savings compound on every order.`,
-    stat: '3 hubs covering 85% of US population within 3-day ground',
+This means more Zone 2-3 deliveries and fewer Zone 7-8 shipments — a shorter lane billed and a shorter lane travelled.`,
+    stat: '3 self-operated US hubs: NJ · TX · CA',
   },
   {
     id: 'heavy-parcel',
@@ -49,14 +49,14 @@ Heavy parcels trigger:
 • Liftgate fees ($50-150)
 
 A dedicated heavy parcel partner like Shipping Cow optimizes for this exact weight category, with pricing that starts where standard carriers peak.`,
-    stat: 'Heavy parcel shippers overpay by 25-40% on standard carrier rates',
+    stat: '50–149 lbs: where standard carriers stop optimizing and start surcharging',
   },
   {
     id: 'audit-checklist',
     title: 'Your Free Shipping Cost Audit Checklist',
     content: `Before you negotiate your next carrier contract, run through this audit:
 
-1. Check your DIM divisor — Are you on 139 or 225?
+1. Check your DIM divisor — what number is your carrier actually dividing by?
 2. Review your fuel surcharge — What percentage are you paying?
 3. Map your zone distribution — What % of shipments go to Zone 5+?
 4. Identify heavy parcels — What % of items are 50-150 lbs?
@@ -64,7 +64,7 @@ A dedicated heavy parcel partner like Shipping Cow optimizes for this exact weig
 6. Compare 3PL pricing — How does your all-in rate compare?
 
 Upload your shipment data to our free audit tool for an instant analysis.`,
-    stat: 'Most shippers discover $500-5,000/month in hidden cost savings',
+    stat: 'Run the checklist before you sign your next carrier contract',
   },
 ];
 
@@ -105,8 +105,8 @@ export default function GuidePage() {
             The Heavy Parcel <span className="text-yellow">Cost-Saving Guide</span>
           </h1>
           <p className="guide-hero__sub">
-            How DIM 225, a discounted fuel surcharge program, and smart zone routing can cut your
-            shipping costs by 30% or more.
+            How dimensional weight, fuel surcharges, and zone routing decide what you actually pay to
+            ship a 50–149 lb parcel — and where the money leaks.
           </p>
 
           {!submitted ? (

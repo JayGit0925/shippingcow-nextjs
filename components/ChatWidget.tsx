@@ -90,7 +90,7 @@ function getOpener(pathname: string, calcContext: Record<string, unknown> | null
   if (pathname.startsWith('/big-and-bulky') || pathname.startsWith('/heavy')) {
     return {
       id: 'heavy',
-      message: "Heavy items eating your margin? Tell me your avg weight and monthly volume — I'll show you what DIM 225 saves.",
+      message: "Heavy items eating your margin? Tell me your avg weight and monthly volume — I'll show you what your carrier is billing you for.",
     };
   }
   if (pathname.startsWith('/calculator')) {
@@ -107,7 +107,7 @@ function getOpener(pathname: string, calcContext: Record<string, unknown> | null
   }
   return {
     id: 'default',
-    message: "Hey! I'm the ShippingCow AI 🐄 Ask me about cutting your shipping costs, our warehouses, or how DIM 225 pricing works.",
+    message: "Hey! I'm the ShippingCow AI 🐄 Ask me about cutting your shipping costs, our warehouses, or how dimensional weight billing works.",
   };
 }
 
@@ -471,7 +471,7 @@ export default function ChatWidget() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                 {[
                   "How much can I save on shipping?",
-                  "Tell me about DIM 225 pricing",
+                  "How does DIM weight billing work?",
                   "What warehouses do you have?",
                 ].map((chip) => (
                   <button

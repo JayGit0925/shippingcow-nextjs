@@ -1,17 +1,24 @@
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shippingcow.ai';
+import { SITE_URL } from '@/lib/site';
 
+// NOTE: no postalAddress is emitted — there is no verified public street address
+// in this repo. Do not invent one. sc-devops/PM to supply before adding.
 export default function JsonLd() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
       {
         '@type': 'Organization',
-        '@id': `${siteUrl}/#organization`,
-        name: 'Shipping Cow',
-        url: siteUrl,
-        logo: `${siteUrl}/icon.svg`,
+        '@id': `${SITE_URL}/#organization`,
+        name: 'ShippingCow',
+        url: SITE_URL,
+        logo: `${SITE_URL}/icon.svg`,
         description:
-          'AI-native logistics platform for heavy-goods e-commerce. Enterprise rates, zero shrinkage, guaranteed 2-day delivery.',
+          'ShippingCow is the self-operated US 3PL built for 50–149 lb heavy DTC parcels.',
+        parentOrganization: {
+          '@type': 'Organization',
+          name: 'Logistar',
+        },
+        areaServed: 'US',
         sameAs: [
           'https://twitter.com/shippingcow',
           'https://linkedin.com/company/shippingcow',
@@ -19,12 +26,12 @@ export default function JsonLd() {
       },
       {
         '@type': 'WebSite',
-        '@id': `${siteUrl}/#website`,
-        url: siteUrl,
-        name: 'Shipping Cow',
+        '@id': `${SITE_URL}/#website`,
+        url: SITE_URL,
+        name: 'ShippingCow',
         description:
-          '3PL for 50–149 lb parcels — DIM 225 billing, pooled enterprise FedEx rates, zone-skipping.',
-        publisher: { '@id': `${siteUrl}/#organization` },
+          'The self-operated US 3PL built for 50–149 lb parcels.',
+        publisher: { '@id': `${SITE_URL}/#organization` },
       },
     ],
   };

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendAuditReport } from '@/lib/email';
 import { getAudit } from '@/lib/db';
+import { SITE_URL } from '@/lib/site';
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
   }
 
   const annual_savings = Number(audit.total_savings) * 12;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shippingcow.com';
+  const siteUrl = SITE_URL;
 
   sendAuditReport(email, audit_id, annual_savings, siteUrl).catch(
     (e) => console.error('[audit/unlock] email error:', e)

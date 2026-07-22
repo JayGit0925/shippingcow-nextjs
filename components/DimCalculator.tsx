@@ -6,9 +6,13 @@ import { useSearchParams } from 'next/navigation';
 import {
   DIM_DIVISOR_STANDARD,
   DIM_DIVISOR_3PL,
-  DIM_DIVISOR_SHIPPINGCOW,
-  ESTIMATED_COST_PER_LB,
 } from '@/lib/constants';
+
+// PUBLIC SURFACE RULE (Jay, 2026-07-22):
+// This calculator shows the customer what THEIR CURRENT carrier is billing them
+// for, computed at the PUBLISHED carrier divisors (139 UPS/FedEx, 166 typical 3PL).
+// It must NOT display a ShippingCow divisor, a ShippingCow rate, or a savings %.
+// Sell the audit, not a number.
 
 // ---- Types ----
 type ZoneResults = {
@@ -40,37 +44,35 @@ function billable(actual: number, dim: number) {
 }
 
 type Results = {
-  dim139: number; dim166: number; dim225: number;
-  bill139: number; bill166: number; bill225: number;
-  savingsPerPkg: number;
-  annualSavings: number;
-  pctSaved: number;
-  lbsSaved: number;
+  dim139: number; dim166: number;
+  bill139: number; bill166: number;
+  /** Pounds you are billed for above what the package actually weighs, at divisor 139. */
+  phantomLbs139: number;
+  /** Same, at the typical 3PL divisor 166. */
+  phantomLbs166: number;
+  /** Phantom lbs across your stated monthly volume, at divisor 139. */
+  phantomLbsMonthly139: number;
 };
 
 function calcResults(l: number, w: number, h: number, weight: number, vol: number): Results {
   const dim139 = dimWeight(l, w, h, DIM_DIVISOR_STANDARD);
   const dim166 = dimWeight(l, w, h, DIM_DIVISOR_3PL);
-  const dim225 = dimWeight(l, w, h, DIM_DIVISOR_SHIPPINGCOW);
   const bill139 = billable(weight, dim139);
   const bill166 = billable(weight, dim166);
-  const bill225 = billable(weight, dim225);
-  const lbsSaved = bill139 - bill225;
-  const pctSaved = bill139 > 0 ? (lbsSaved / bill139) * 100 : 0;
-  const savingsPerPkg = lbsSaved * ESTIMATED_COST_PER_LB;
-  const annualSavings = savingsPerPkg * vol * 12;
-  return { dim139, dim166, dim225, bill139, bill166, bill225, savingsPerPkg, annualSavings, pctSaved, lbsSaved };
+  const phantomLbs139 = Math.max(bill139 - weight, 0);
+  const phantomLbs166 = Math.max(bill166 - weight, 0);
+  return {
+    dim139, dim166, bill139, bill166,
+    phantomLbs139, phantomLbs166,
+    phantomLbsMonthly139: phantomLbs139 * vol,
+  };
 }
 
 function fmt1(n: number) { return n.toFixed(1); }
-function fmtDollar(n: number) {
-  if (n >= 1000) return `$${(n / 1000).toFixed(1)}K`;
-  return `$${n.toFixed(2)}`;
-}
 
 // ---- Bar component ----
-function Bar({ value, max, color, label, billable: bill, isBest }: {
-  value: number; max: number; color: string; label: string; billable: number; isBest?: boolean;
+function Bar({ value, max, color, label, billable: bill, isBest, isActual }: {
+  value: number; max: number; color: string; label: string; billable: number; isBest?: boolean; isActual?: boolean;
 }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   return (
@@ -95,10 +97,10 @@ function Bar({ value, max, color, label, billable: bill, isBest }: {
         }} />
       </div>
       <div style={{ marginTop: '0.5rem', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, color: isBest ? '#059669' : '#fff' }}>
-        {fmt1(value)} lbs DIM
+        {fmt1(value)} lbs {isActual ? 'actual' : 'DIM'}
       </div>
       <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
-        Billable: {fmt1(bill)} lbs
+        {isActual ? 'What it weighs' : `Billed: ${fmt1(bill)} lbs`}
       </div>
     </div>
   );
@@ -222,7 +224,7 @@ export default function DimCalculator() {
     });
   }
 
-  const maxDim = Math.max(results.dim139, results.dim166, results.dim225, 1);
+  const maxDim = Math.max(results.dim139, results.dim166, weight, 1);
   const inquiryHref = `/inquiry?l=${length}&w=${width}&h=${height}&weight=${weight}`;
 
   return (
@@ -274,7 +276,7 @@ export default function DimCalculator() {
           {/* ---- ZIP inputs for zone-based estimate ---- */}
           <div style={{ marginTop: '1rem', borderTop: '2px dashed rgba(0,0,0,0.1)', paddingTop: '1rem' }}>
             <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--blue)', marginBottom: '0.6rem', letterSpacing: '0.04em' }}>
-              📍 Zone-Based Real Estimate
+              📍 Zone Check (Optional)
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <div className="dim-calculator__field" style={{ flex: 1 }}>
@@ -300,7 +302,7 @@ export default function DimCalculator() {
             </div>
             {originZip.length === 5 && destZip.length === 5 && (
               <div style={{ fontSize: '0.72rem', color: '#6b7280', marginTop: '0.3rem' }}>
-                {zoneLoading ? '⏳ Calculating real rates...' : zoneError ? `⚠ ${zoneError}` : ''}
+                {zoneLoading ? '⏳ Checking zones…' : zoneError ? `⚠ ${zoneError}` : ''}
               </div>
             )}
           </div>
@@ -315,109 +317,82 @@ export default function DimCalculator() {
           {/* Bar chart */}
           <div style={{ background: '#1A202C', padding: '1.5rem', border: '4px solid var(--dark)', boxShadow: 'var(--shadow-pixel)', marginBottom: '1.5rem' }}>
             <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.06em' }}>
-              DIM Weight Comparison
+              What You&apos;re Billed For Today
             </div>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+              <Bar value={weight} max={maxDim} color="#0059D2" label="Actual Weight" billable={weight} isActual />
               <Bar value={results.dim139} max={maxDim} color="#ef4444" label="UPS / FedEx (÷139)" billable={results.bill139} />
               <Bar value={results.dim166} max={maxDim} color="#f97316" label="Typical 3PL (÷166)" billable={results.bill166} />
-              <Bar value={results.dim225} max={maxDim} color="#059669" label="ShippingCow (÷225)" billable={results.bill225} isBest />
             </div>
           </div>
 
-          {/* Savings callout */}
+          {/* Phantom weight callout — customer's own carrier, published divisors only */}
           <div style={{ background: 'var(--yellow)', border: '4px solid var(--dark)', padding: '1.2rem', boxShadow: 'var(--shadow-pixel)', marginBottom: '1.5rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
                 <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.6rem', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
-                  Billable lbs saved vs UPS/FedEx
+                  Phantom lbs per package (÷139)
                 </div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 900, color: 'var(--dark)' }}>
-                  {fmt1(results.lbsSaved)} lbs
+                  {fmt1(results.phantomLbs139)} lbs
                 </div>
                 <div style={{ fontSize: '0.8rem', color: '#3a4454' }}>
-                  {fmt1(results.pctSaved)}% reduction
+                  Billed {fmt1(results.bill139)} lbs on a {fmt1(weight)} lb package
                 </div>
               </div>
               <div>
                 <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.6rem', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
-                  Estimated annual savings
+                  Phantom lbs per month
                 </div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 900, color: 'var(--dark)' }}>
-                  {fmtDollar(results.annualSavings)}
+                  {results.phantomLbsMonthly139.toLocaleString(undefined, { maximumFractionDigits: 0 })} lbs
                 </div>
                 <div style={{ fontSize: '0.8rem', color: '#3a4454' }}>
-                  {fmtDollar(results.savingsPerPkg)} per package × {volume.toLocaleString()} mo × 12
+                  {fmt1(results.phantomLbs139)} lbs × {volume.toLocaleString()} shipments/mo
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ---- Zone-based real estimate results ---- */}
+          {/* ---- Zone routing check (distance/zone only — no rates shown) ---- */}
           {zoneResults && (
             <div style={{ background: '#EEF2FF', border: '4px solid var(--blue)', padding: '1.2rem', boxShadow: '4px 4px 0 var(--blue)', marginBottom: '1.5rem' }}>
               <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--blue)', marginBottom: '0.6rem', letterSpacing: '0.04em' }}>
-                📍 Real Zone-Based Savings
+                📍 Zone Routing Check
               </div>
 
-              {/* Zone routing summary */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
                 <div style={{ background: '#fff', padding: '0.6rem 0.8rem', border: '2px solid var(--dark)' }}>
-                  <div style={{ fontSize: '0.65rem', color: '#6b7280', fontFamily: 'var(--font-pixel)', textTransform: 'uppercase' }}>Current (Direct)</div>
+                  <div style={{ fontSize: '0.65rem', color: '#6b7280', fontFamily: 'var(--font-pixel)', textTransform: 'uppercase' }}>Shipping Direct Today</div>
                   <div style={{ fontWeight: 700 }}>Zone {zoneResults.current_zone} · {zoneResults.current_distance_miles.toLocaleString()} mi</div>
-                  <div style={{ fontSize: '0.75rem', color: '#3a4454' }}>Bill: {zoneResults.current_billable_139} lbs · <strong>${zoneResults.current_cost_per_pkg}/pkg</strong></div>
                 </div>
                 <div style={{ background: '#fff', padding: '0.6rem 0.8rem', border: '2px solid #059669' }}>
-                  <div style={{ fontSize: '0.65rem', color: '#059669', fontFamily: 'var(--font-pixel)', textTransform: 'uppercase' }}>ShippingCow (via {zoneResults.sc_warehouse})</div>
+                  <div style={{ fontSize: '0.65rem', color: '#059669', fontFamily: 'var(--font-pixel)', textTransform: 'uppercase' }}>From Our {zoneResults.sc_warehouse} Warehouse</div>
                   <div style={{ fontWeight: 700 }}>Zone {zoneResults.sc_zone} · {zoneResults.sc_distance_miles.toLocaleString()} mi</div>
-                  <div style={{ fontSize: '0.75rem', color: '#3a4454' }}>Bill: {zoneResults.sc_billable_225} lbs · <strong>${zoneResults.sc_cost_per_pkg}/pkg</strong></div>
                 </div>
               </div>
 
-              {/* Savings breakdown */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem' }}>
-                <div style={{ background: 'var(--yellow)', padding: '0.8rem', border: '3px solid var(--dark)', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', marginBottom: '0.3rem', color: '#3a4454' }}>
-                    Zone Improvement
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--dark)' }}>
-                    -{zoneResults.zone_improvement}
-                  </div>
-                  <div style={{ fontSize: '0.7rem', color: '#3a4454' }}>zones closer</div>
+              <div style={{ background: 'var(--yellow)', padding: '0.8rem', border: '3px solid var(--dark)', textAlign: 'center' }}>
+                <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', marginBottom: '0.3rem', color: '#3a4454' }}>
+                  Zone Improvement
                 </div>
-                <div style={{ background: 'var(--yellow)', padding: '0.8rem', border: '3px solid var(--dark)', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', marginBottom: '0.3rem', color: '#3a4454' }}>
-                    Per Package
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--dark)' }}>
-                    ${zoneResults.savings_per_pkg.toFixed(2)}
-                  </div>
-                  <div style={{ fontSize: '0.7rem', color: '#3a4454' }}>real savings</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--dark)' }}>
+                  -{zoneResults.zone_improvement}
                 </div>
-                <div style={{ background: '#059669', padding: '0.8rem', border: '3px solid var(--dark)', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', marginBottom: '0.3rem', color: 'rgba(255,255,255,0.8)' }}>
-                    Annual (Real)
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>
-                    ${zoneResults.annual_savings >= 1000 ? `${(zoneResults.annual_savings / 1000).toFixed(1)}K` : zoneResults.annual_savings}
-                  </div>
-                  <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)' }}>
-                    vs old est. ${zoneResults.old_estimate_annual >= 1000 ? `${(zoneResults.old_estimate_annual / 1000).toFixed(1)}K` : zoneResults.old_estimate_annual}
-                  </div>
-                </div>
+                <div style={{ fontSize: '0.7rem', color: '#3a4454' }}>zones closer to your customer</div>
               </div>
 
               <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.6rem', textAlign: 'center' }}>
-                Includes rate card, handling fees, and inbound LTL cost amortized per unit.
+                Zone and distance only. What it costs depends on your volume and lane mix — that is what the audit is for.
               </div>
             </div>
           )}
 
-          {/* 3-column detail table */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem', marginBottom: '1.5rem' }}>
+          {/* Detail table — published carrier divisors only */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem', marginBottom: '1.5rem' }}>
             {([
               { label: 'UPS / FedEx', divisor: DIM_DIVISOR_STANDARD, dim: results.dim139, bill: results.bill139, isBest: false, color: '#ef4444' },
               { label: 'Typical 3PL', divisor: DIM_DIVISOR_3PL,      dim: results.dim166, bill: results.bill166, isBest: false, color: '#f97316' },
-              { label: 'ShippingCow', divisor: DIM_DIVISOR_SHIPPINGCOW, dim: results.dim225, bill: results.bill225, isBest: true,  color: '#059669' },
             ] as const).map(col => (
               <div key={col.divisor} style={{
                 border: `3px solid ${col.isBest ? col.color : 'var(--dark)'}`,
@@ -430,7 +405,7 @@ export default function DimCalculator() {
                 </div>
                 <div style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '0.2rem' }}>÷{col.divisor} divisor</div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>DIM: {fmt1(col.dim)} lbs</div>
-                <div style={{ fontSize: '0.85rem', color: col.isBest ? col.color : 'var(--dark)', fontWeight: 700 }}>Bill: {fmt1(col.bill)} lbs</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--dark)', fontWeight: 700 }}>You&apos;re billed: {fmt1(col.bill)} lbs</div>
               </div>
             ))}
           </div>
@@ -450,7 +425,8 @@ export default function DimCalculator() {
           </div>
 
           <p style={{ fontSize: '0.72rem', color: '#6b7280', marginTop: '0.75rem' }}>
-            * Savings estimate uses ${ESTIMATED_COST_PER_LB}/lb blended rate. Actual savings vary by carrier, zone, and negotiated rates.
+            * Calculated at the carriers&apos; published DIM divisors — UPS/FedEx 139 and the typical 3PL 166. This is what your
+            current carrier bills you for, not a ShippingCow quote. Send us an invoice and we&apos;ll price the real thing.
           </p>
         </div>
       </div>

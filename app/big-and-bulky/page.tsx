@@ -2,9 +2,10 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Big & Bulky Shipping — 50–149 lb Products | Shipping Cow',
+  title: 'Big & Bulky Shipping — 50–149 lb Products | ShippingCow',
   description:
-    'Finally — a 3PL built for heavy products. FedEx Heavy rates from $35.10, white-glove handling, 3-warehouse US coverage. Furniture, gym equipment, appliances, auto parts.',
+    'The self-operated US 3PL built for 50–149 lb products. FedEx Heavy program, white-glove handling, 3-warehouse US coverage. Furniture, gym equipment, appliances, auto parts.',
+  alternates: { canonical: '/big-and-bulky' },
 };
 
 const PRODUCTS = [
@@ -25,12 +26,12 @@ const PAIN_POINTS = [
   {
     icon: '💸',
     title: 'LTL Rates Are Killing Margins',
-    body: 'Carriers slot your 80 lb shipment into LTL pricing and charge $180+ per piece. Our FedEx Heavy program ships the same box for $47–$55. That\'s $125+ back per order.',
+    body: 'Carriers slot your 80 lb shipment into LTL pricing and price it like freight. Our FedEx Heavy program keeps it in the parcel network, where a right-sized heavy box belongs.',
   },
   {
     icon: '📐',
     title: 'DIM Weight Blindsides You',
-    body: 'A 55 lb sofa cushion in a 24×18×12 box bills at 79 lbs DIM. We audit every SKU for the optimal box spec and repack where needed — most clients cut DIM overcharges by 30%.',
+    body: 'A 55 lb sofa cushion in a 24×18×12 box bills at 79 lbs DIM at the carrier\'s published 139 divisor. We audit every SKU for the optimal box spec and repack where needed.',
   },
 ];
 
@@ -57,13 +58,9 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const RATE_ROWS = [
-  { range: '50–59 lbs', from: 35.10, to: 38.70 },
-  { range: '60–79 lbs', from: 39.10, to: 46.70 },
-  { range: '80–99 lbs', from: 47.10, to: 57.10 },
-  { range: '100–125 lbs', from: 57.70, to: 74.20 },
-  { range: '126–149 lbs', from: 74.60, to: 74.60 },
-];
+// Rate figures are not published on public pages (Jay, 2026-07-22). Weight
+// bands stay so sellers can self-identify; pricing comes from the audit.
+const WEIGHT_BANDS = ['50–59 lbs', '60–79 lbs', '80–99 lbs', '100–125 lbs', '126–149 lbs'];
 
 const WAREHOUSES = [
   { key: 'NJ', city: 'New Brunswick', state: 'NJ', zip: '08901', covers: 'East Coast + Midwest', emoji: '🗽' },
@@ -115,11 +112,11 @@ export default function BigAndBulkyPage() {
 
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
                 <Link href="/inquiry" className="btn btn--blue">Get My Free Savings Quote →</Link>
-                <Link href="#rates" className="btn btn--ghost">See Our Rates</Link>
+                <Link href="#rates" className="btn btn--ghost">How Pricing Works</Link>
               </div>
 
               <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.9rem', fontFamily: 'var(--font-display)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                {['FedEx Heavy from $35.10', '3 US Warehouses', 'DIM Audit Included', 'No Oversize Surcharges'].map(t => (
+                {['FedEx Heavy Program', '3 US Warehouses', 'DIM Audit Included', 'No Oversize Surcharges'].map(t => (
                   <span key={t} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <span style={{ color: '#059669', fontWeight: 700 }}>✓</span> {t}
                   </span>
@@ -130,9 +127,9 @@ export default function BigAndBulkyPage() {
             {/* Stat badge */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 180 }}>
               {[
-                { num: '$35.10', label: 'Starting Rate', sub: '50 lb FedEx Heavy' },
+                { num: '50–149', label: 'lb Sweet Spot', sub: 'our whole operation' },
                 { num: '3', label: 'US Warehouses', sub: 'NJ · TX · CA' },
-                { num: '30%', label: 'DIM Savings', sub: 'avg per SKU' },
+                { num: 'Self-Op', label: 'Not Brokered', sub: 'we run the floor' },
               ].map(s => (
                 <div key={s.label} style={{
                   border: '3px solid #1A202C', padding: '1rem 1.2rem',
@@ -198,36 +195,25 @@ export default function BigAndBulkyPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'start' }}>
             <div>
               <h2 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: 'clamp(1.6rem,4vw,2.4rem)', marginBottom: '0.8rem' }}>
-                Transparent <span style={{ color: '#0052C9' }}>FedEx Heavy</span> Pricing
+                Straight <span style={{ color: '#0052C9' }}>FedEx Heavy</span> Pricing
               </h2>
               <p style={{ color: '#3a4454', marginBottom: '2rem', lineHeight: 1.6 }}>
-                No hidden surcharges. No "oversize" mystery fees. These are real FedEx Heavy rates — the same program Fortune 500 companies pay millions for access to.
+                No hidden surcharges. No &ldquo;oversize&rdquo; mystery fees. We quote against your actual SKU mix, weight band,
+                and lane profile — because a rate card that ignores your zones is a rate card that lies to you.
               </p>
 
               <div style={{ border: '3px solid #1A202C', boxShadow: '4px 4px 0 #1A202C', overflow: 'hidden' }}>
                 <div style={{ background: '#0052C9', color: '#fff', padding: '0.8rem 1.2rem', fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
-                  FedEx Heavy Rate Table — NJ Warehouse (08901)
+                  Weight Bands We Serve
                 </div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                  <thead>
-                    <tr style={{ background: '#F4F7FF', borderBottom: '2px solid #1A202C' }}>
-                      <th style={{ padding: '0.7rem 1rem', textAlign: 'left', fontFamily: 'var(--font-display)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Weight Range</th>
-                      <th style={{ padding: '0.7rem 1rem', textAlign: 'right', fontFamily: 'var(--font-display)', fontSize: '0.75rem', textTransform: 'uppercase' }}>From</th>
-                      <th style={{ padding: '0.7rem 1rem', textAlign: 'right', fontFamily: 'var(--font-display)', fontSize: '0.75rem', textTransform: 'uppercase' }}>To</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {RATE_ROWS.map((r, i) => (
-                      <tr key={r.range} style={{ borderBottom: '1px solid #e5e7eb', background: i % 2 === 0 ? '#fff' : '#F9FAFB' }}>
-                        <td style={{ padding: '0.7rem 1rem', fontWeight: 600 }}>{r.range}</td>
-                        <td style={{ padding: '0.7rem 1rem', textAlign: 'right', color: '#0052C9', fontWeight: 700 }}>${r.from.toFixed(2)}</td>
-                        <td style={{ padding: '0.7rem 1rem', textAlign: 'right', color: '#6b7280' }}>${r.to.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <ul style={{ margin: 0, padding: '1rem 1.2rem 1rem 2.2rem', fontSize: '0.9rem', lineHeight: 1.9 }}>
+                  {WEIGHT_BANDS.map(b => (
+                    <li key={b}><strong>{b}</strong> — FedEx Heavy, parcel network, no LTL reclassification</li>
+                  ))}
+                </ul>
                 <div style={{ padding: '0.8rem 1rem', background: '#F4F7FF', fontSize: '0.78rem', color: '#6b7280', borderTop: '1px solid #e5e7eb' }}>
-                  + Handling fee $3.60–$5.50 (50–80 lbs) · Rates shown are last-mile delivery, Zone 2 base.
+                  Send us a shipment export and we&apos;ll price your real lanes, handling included —{' '}
+                  <Link href="/audit" style={{ color: '#0052C9', fontWeight: 700 }}>get the free audit</Link>.
                 </div>
               </div>
             </div>
@@ -237,7 +223,7 @@ export default function BigAndBulkyPage() {
                 What's Included at Every Weight
               </h3>
               {[
-                { icon: '📦', title: 'Receive & Inbound', body: 'Container unloading, carton putaway, SKU verification. Pallet putaway $12 · Carton putaway $2.40.' },
+                { icon: '📦', title: 'Receive & Inbound', body: 'Container unloading, carton putaway, SKU verification — priced per your inbound profile.' },
                 { icon: '🔍', title: 'DIM Audit', body: 'Every SKU measured and documented. We recommend carton specs to minimize dimensional weight billing.' },
                 { icon: '🏷️', title: 'Pick, Pack & Label', body: 'Single-item or multi-item orders. FedEx Heavy labels generated and applied.' },
                 { icon: '🚛', title: 'FedEx Heavy Pickup', body: 'Daily carrier pickup from all 3 warehouses. No minimum volume requirement.' },
@@ -295,7 +281,7 @@ export default function BigAndBulkyPage() {
               3 Warehouses. <span style={{ color: '#0052C9' }}>Lower Zones.</span> Faster Delivery.
             </h2>
             <p style={{ color: '#3a4454', maxWidth: 560, margin: '0 auto' }}>
-              We split your inventory across East, Central, and West to keep every shipment at the lowest possible FedEx zone — that means lower cost and 2-day ground delivery to more ZIP codes.
+              We split your inventory across East, Central, and West to keep every shipment at the lowest possible FedEx zone — shorter lanes, fewer zone surcharges, fewer days in transit.
             </p>
           </div>
 

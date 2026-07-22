@@ -7,12 +7,13 @@ import CookieConsent from '@/components/CookieConsent';
 import PostHogProvider from '@/components/PostHogProvider';
 import JsonLd from '@/components/JsonLd';
 import { Analytics } from '@vercel/analytics/react';
+import { SITE_URL } from '@/lib/site';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://shippingcow.ai'),
-  title: 'Shipping Cow — 3PL for 50–149 lb Parcels | DIM 225 Billing',
+  metadataBase: new URL(SITE_URL),
+  title: 'ShippingCow — The Self-Operated US 3PL Built for 50–149 lb Parcels',
   description:
-    'The 3PL built for heavy parcels. DIM 225 billing (vs carriers’ 139), pooled enterprise FedEx rates, and zone-skipping — typically 15–20% lower all-in cost, up to 52% on zone 7–8 lanes.',
+    'ShippingCow is the self-operated US 3PL built for 50–149 lb heavy DTC parcels. Pooled enterprise FedEx rates, zone-skip routing, and a free audit of what your current carrier is actually billing you for.',
   keywords: [
     'heavy goods 3PL',
     'oversized shipping',
@@ -24,16 +25,18 @@ export const metadata: Metadata = {
     'freight logistics platform',
   ],
   openGraph: {
-    title: 'Shipping Cow — Moo-ve Heavy Goods Without Getting Milked',
+    title: 'ShippingCow — Moo-ve Heavy Goods Without Getting Milked',
     description:
-      'DIM 225 billing, pooled enterprise FedEx rates, zone-skipping. Typically 15–20% lower all-in cost on 50–149 lb parcels.',
+      'The self-operated US 3PL built for 50–149 lb parcels. Pooled enterprise FedEx rates and zone-skip routing.',
     type: 'website',
+    url: SITE_URL,
+    siteName: 'ShippingCow',
     images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'ShippingCow — 3PL for 50–149 lb Parcels',
-    description: 'DIM 225 billing vs carriers’ 139. Pooled enterprise FedEx rates. Zone-skipping to 92% of the US.',
+    description: 'The self-operated US 3PL built for 50–149 lb parcels. Pooled enterprise FedEx rates. Zone-skip routing.',
     images: ['/opengraph-image'],
   },
   alternates: { canonical: './' },

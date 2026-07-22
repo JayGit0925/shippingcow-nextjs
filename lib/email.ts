@@ -114,7 +114,7 @@ export async function sendLeadFollowup(params: {
 
   const displayName = params.name || 'there';
   const savingsLine = params.annualSavings
-    ? `Based on your earlier calculation, you could save <strong>$${Math.round(params.annualSavings).toLocaleString()}/year</strong> with DIM 225 pricing and smart routing.`
+    ? 'Based on the box you ran through our calculator, your carrier is billing you for a meaningful amount of weight you never shipped.'
     : 'Based on your product dimensions, you may be significantly overpaying for shipping.';
 
   try {
@@ -172,8 +172,8 @@ export async function sendGuideEmail(to: string, name: string): Promise<{ ok: tr
             <p>Hi ${escapeHtml(displayName)},</p>
             <p>Here's the quick-start guide to cutting your heavy parcel shipping costs. The math works for any product in the 50-150 lb range.</p>
 
-            <h3 style="color: #0052C9; margin: 24px 0 8px;">1. DIM 225 — The 30% Hack</h3>
-            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Standard carriers use a DIM divisor of 139, billing you for phantom weight. At DIM 225, your package bills at actual weight. A 40 lb bike in a standard box drops from 52 lb billable to 40 lb — 30% savings on every shipment.</p>
+            <h3 style="color: #0052C9; margin: 24px 0 8px;">1. Dimensional Weight — Know Your Number</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Standard carriers use a published DIM divisor of 139, which bills you for phantom weight. A 40 lb bike in a standard box bills at 52 lb — 12 lb you never shipped. Multiply that across a year of orders before you accept your next rate sheet.</p>
 
             <h3 style="color: #0052C9; margin: 24px 0 8px;">2. Fuel Surcharge Waivers</h3>
             <p style="font-size: 14px; line-height: 1.6; color: #374151;">Fuel surcharges add 8-15% to every bill. They're applied post-discount, so they eat into your negotiated rates. Carrier contracts that price fuel below the published market rate shrink this hidden tax.</p>
@@ -192,7 +192,7 @@ export async function sendGuideEmail(to: string, name: string): Promise<{ ok: tr
                 Run Your Free Audit →
               </a>
             </div>
-            <p style="font-size: 13px; color: #666; text-align: center;">Upload your shipment data. See your exact savings in under 60 seconds.</p>
+            <p style="font-size: 13px; color: #666; text-align: center;">Upload your shipment data. See exactly what you are being billed for.</p>
 
             <p style="margin-top: 32px;">— The Shipping Cow Team 🐄</p>
             <p style="font-size: 12px; color: #9CA3AF; margin-top: 16px;">P.S. Want personalized numbers? Reply to this email with your monthly volume and we'll run the calc for you.</p>

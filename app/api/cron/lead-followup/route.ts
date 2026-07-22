@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getStaleNewLeads, markLeadFollowupSent } from '@/lib/db';
 import { sendLeadFollowup } from '@/lib/email';
+import { SITE_URL } from '@/lib/site';
 
 // Vercel cron calls this with GET. Protected by CRON_SECRET env var.
 export async function GET(req: Request) {
@@ -9,7 +10,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shippingcow.com';
+  const siteUrl = SITE_URL;
 
   try {
     const leads = await getStaleNewLeads();
