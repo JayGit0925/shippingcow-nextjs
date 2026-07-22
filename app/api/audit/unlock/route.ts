@@ -19,7 +19,8 @@ export async function POST(req: Request) {
 
   const { email, audit_id } = parsed.data;
 
-  // Verify audit exists; trust DB for savings, never client input
+  // Verify audit exists; trust DB, never client input. The savings figure below
+  // is INTERNAL ONLY — it goes to our Slack alert, never to the customer email.
   const audit = await getAudit(audit_id);
   if (!audit) {
     return NextResponse.json({ error: 'Audit not found' }, { status: 404 });
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
   const annual_savings = Number(audit.total_savings) * 12;
   const siteUrl = SITE_URL;
 
-  sendAuditReport(email, audit_id, annual_savings, siteUrl).catch(
+  sendAuditReport(email, audit_id, siteUrl).catch(
     (e) => console.error('[audit/unlock] email error:', e)
   );
 

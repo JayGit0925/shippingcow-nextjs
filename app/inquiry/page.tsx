@@ -263,8 +263,10 @@ function InquiryInner() {
           <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.7rem', color: 'var(--blue)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
             Based on your audit
           </div>
+          {/* Savings dollar figure removed 2026-07-22 (Jay): derived from
+              ZONE_RATE_MULTIPLIER / ESTIMATED_COST_PER_LB placeholders. */}
           <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>
-            You could save <span style={{ color: 'var(--blue)' }}>${(auditSummary.annual_savings).toLocaleString('en-US', {minimumFractionDigits: 0})}/year</span>
+            We&apos;ve read your shipments — we can see exactly what you&apos;re being billed for.
           </div>
           <div style={{ fontSize: '0.95rem', color: '#3a4454', marginTop: '0.5rem' }}>
             Complete your profile below and we'll send you a detailed breakdown within 1 business day.

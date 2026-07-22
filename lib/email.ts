@@ -208,23 +208,26 @@ export async function sendGuideEmail(to: string, name: string): Promise<{ ok: tr
   }
 }
 
+// NOTE: this email deliberately quotes NO savings figure. The savings math is
+// built on ESTIMATED_COST_PER_LB / ZONE_RATE_MULTIPLIER, which are placeholder
+// coefficients (Jay, 2026-07-22). The internal value is still stored on the
+// audit record and still fires to Slack for the team — it just never reaches
+// the customer.
 export async function sendAuditReport(
   to: string,
   auditId: string,
-  annualSavings: number,
   siteUrl: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const client = getClient();
   if (!client) return { ok: false, error: 'Email not configured' };
 
   const reportUrl = `${siteUrl}/audit/report/${auditId}`;
-  const savings = annualSavings.toLocaleString('en-US', { minimumFractionDigits: 0 });
 
   try {
     await client.emails.send({
       from,
       to,
-      subject: `🐄 Your ShippingCow Audit — $${savings}/yr in potential savings`,
+      subject: '🐄 Your ShippingCow audit is ready',
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1A202C;">
           <div style="background: #0052C9; color: #fff; padding: 24px; text-align: center; border: 4px solid #1A202C;">
@@ -232,7 +235,7 @@ export async function sendAuditReport(
             <p style="margin: 8px 0 0; color: #FEB81B;">Your shipment audit is ready</p>
           </div>
           <div style="background: #fff; padding: 24px; border: 4px solid #1A202C; border-top: 0;">
-            <p>Here's your full audit report showing <strong>$${savings}/year</strong> in potential savings.</p>
+            <p>Here's your full audit report — including exactly how many pounds of phantom weight your carrier is billing you for, and how your shipments are distributed across zones.</p>
             <div style="text-align: center; margin: 32px 0;">
               <a href="${reportUrl}" style="background: #0052C9; color: #fff; padding: 14px 28px; text-decoration: none; font-weight: 700; border: 3px solid #1A202C; display: inline-block;">
                 View Full Report →

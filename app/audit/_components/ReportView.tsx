@@ -13,9 +13,13 @@ export type ReportState = {
 export function ReportView({state, defaultUnlocked = false}: {state: ReportState; defaultUnlocked?: boolean}) {
   const {report, auditId} = state;
   const {
-    total_current_cost,
-    total_sc_cost,
-    total_savings,
+    // Dollar aggregates (total_current_cost / total_sc_cost / total_savings /
+    // savings_percentage / avg_savings_per_package) are deliberately NOT
+    // destructured. They derive from ZONE_RATE_MULTIPLIER and
+    // ESTIMATED_COST_PER_LB, which are placeholder coefficients — we will not
+    // quote a customer a savings figure we cannot honor (Jay, 2026-07-22).
+    // They remain on the API response and the stored lead record for internal use.
+    total_packages,
     avg_zone_before,
     avg_zone_after,
     pct_within_zone_5,
@@ -24,14 +28,18 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
     // dim_weight_reduction_pct is intentionally NOT displayed — no savings
     // percentage on any user-facing surface (Jay, 2026-07-22).
     warehouse_distribution,
-    total_inbound_fees,
-    total_handling_fees,
-    total_last_mile_fees,
     shipment_details,
   } = report;
 
-  const monthly_savings = total_savings;
-  const annual_savings = total_savings * 12;
+  // Real, defensible math: what the carrier bills above what the box weighs,
+  // at the carrier's own published divisor. Computed from the shipments the
+  // customer uploaded — no coefficient of ours is involved.
+  const sum_actual_weight = shipment_details.reduce(
+    (acc, d) => acc + d.weight * (d.quantity || 1), 0
+  );
+  const avg_actual_weight = total_packages > 0 ? sum_actual_weight / total_packages : 0;
+  const avg_phantom_lbs = Math.max(avg_billable_weight_139 - avg_actual_weight, 0);
+  const total_phantom_lbs = avg_phantom_lbs * total_packages;
 
   const [filterZip, setFilterZip] = useState('');
   const [unlocked, setUnlocked] = useState(defaultUnlocked);
@@ -51,7 +59,8 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
       await fetch('/api/audit/unlock', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({email: gateEmail, audit_id: auditId, annual_savings}),
+        // No annual_savings sent: the unlock email must not quote a savings figure.
+        body: JSON.stringify({email: gateEmail, audit_id: auditId}),
       });
       setUnlocked(true);
     } catch {
@@ -71,14 +80,16 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
         {/* Top Banner */}
         <div style={{background: 'var(--blue)', color: '#fff', padding: '3rem', textAlign: 'center', marginBottom: '3rem', border: '3px solid var(--dark)', boxShadow: '4px 4px 0 var(--dark)'}}>
           <div style={{fontSize: '0.8rem', fontFamily: 'var(--font-pixel)', color: '#FEB81B', marginBottom: '0.5rem'}}>
-            YOU COULD SAVE
+            YOU ARE BEING BILLED FOR
           </div>
           <div style={{fontSize: '3rem', fontWeight: 700, fontFamily: 'var(--font-display)'}}>
-            ${total_savings.toLocaleString('en-US', {minimumFractionDigits: 0})}
+            {total_phantom_lbs.toLocaleString('en-US', {maximumFractionDigits: 0})} lbs
           </div>
-          <div style={{fontSize: '1.1rem', marginTop: '0.5rem'}}>per month with ShippingCow</div>
+          <div style={{fontSize: '1.1rem', marginTop: '0.5rem'}}>
+            you never shipped, across {total_packages.toLocaleString()} packages
+          </div>
           <div style={{fontSize: '0.95rem', color: '#FEB81B', marginTop: '1rem'}}>
-            That's ${annual_savings.toLocaleString('en-US', {minimumFractionDigits: 0})} per year
+            {avg_phantom_lbs.toFixed(1)} lbs per package on average, at your carrier&apos;s published DIM 139 divisor
           </div>
         </div>
 
@@ -97,7 +108,7 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
                   Unlock Your Full Report
                 </h3>
                 <p style={{fontSize: '0.95rem', color: '#555', margin: '0 0 1.5rem 0'}}>
-                  Enter your email to see zone breakdowns, per-shipment savings, and your inbound cost analysis. We'll also send you a copy.
+                  Enter your email to see your zone breakdown, per-shipment billable weight, and your inbound routing analysis. We&apos;ll also send you a copy.
                 </p>
                 <form onSubmit={handleGateSubmit} style={{display: 'flex', gap: '0.5rem'}}>
                   <input
@@ -159,27 +170,21 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
             </div>
           </Section>
 
-          <Section title="Cost Breakdown">
-            <table style={{width: '100%', marginTop: '1.5rem', borderCollapse: 'collapse'}}>
-              <tbody>
-                {[
-                  ['Current Shipping', `$${total_current_cost.toFixed(2)}`, '—'],
-                  ['SC Inbound (LTL)', '—', `$${total_inbound_fees.toFixed(2)}`],
-                  ['SC Last-Mile',     '—', `$${total_last_mile_fees.toFixed(2)}`],
-                  ['SC Handling',      '—', `$${total_handling_fees.toFixed(2)}`],
-                  ['Total',            `$${total_current_cost.toFixed(2)}`, `$${total_sc_cost.toFixed(2)}`],
-                ].map((row, i) => (
-                  <tr key={i} style={{borderBottom: '1px solid #E5E7EB', background: i === 4 ? '#F4F7FF' : 'white'}}>
-                    <td style={{padding: '1rem', fontWeight: i === 4 ? 700 : 600}}>{row[0]}</td>
-                    <td style={{padding: '1rem', textAlign: 'right'}}>{row[1]}</td>
-                    <td style={{padding: '1rem', textAlign: 'right'}}>{row[2]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={{marginTop: '1.5rem', fontSize: '1.05rem'}}>
-              <div style={{color: 'var(--blue)', fontWeight: 700}}>Monthly Savings: ${monthly_savings.toFixed(2)}</div>
-              <div style={{color: 'var(--blue)', fontWeight: 700, marginTop: '0.5rem'}}>Annual Savings: ${annual_savings.toFixed(2)}</div>
+          <Section title="What This Costs You">
+            <div style={{marginTop: '1.5rem'}}>
+              <p style={{fontSize: '1.05rem', marginBottom: '1rem'}}>
+                Across the {total_packages.toLocaleString()} packages you uploaded, your carrier bills you for{' '}
+                <strong>{total_phantom_lbs.toLocaleString('en-US', {maximumFractionDigits: 0})} lbs</strong>{' '}
+                of weight that is not in your boxes — an average of{' '}
+                <strong>{avg_phantom_lbs.toFixed(1)} lbs per package</strong>, at the published DIM 139 divisor.
+                On top of that, {pct_within_zone_5.toFixed(0)}% of these shipments could be routed to Zone 5 or
+                better instead of travelling the distance they travel today.
+              </p>
+              <p style={{fontSize: '0.95rem', color: '#555', margin: 0}}>
+                We are deliberately not printing a savings number here. Pricing depends on your real lane mix,
+                volume, and inbound profile — put it in front of us and we will quote it properly instead of
+                showing you an average that has nothing to do with your business.
+              </p>
             </div>
           </Section>
 
@@ -197,7 +202,7 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
               <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem'}}>
                 <thead>
                   <tr style={{background: '#F4F7FF', borderBottom: '2px solid var(--dark)'}}>
-                    {['Origin','Dest','Dims','Wt','Current Zone','SC Zone','Current Cost','SC Cost','Savings'].map(h => (
+                    {['Origin','Dest','Dims','Actual Wt','Billed Wt (DIM 139)','Phantom lbs','Current Zone','SC Zone'].map(h => (
                       <th key={h} style={tableHeaderStyle}>{h}</th>
                     ))}
                   </tr>
@@ -208,15 +213,14 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
                       <td style={tableCellStyle}>{detail.origin_zip}</td>
                       <td style={tableCellStyle}>{detail.dest_zip}</td>
                       <td style={tableCellStyle}>{detail.length}×{detail.width}×{detail.height}</td>
-                      <td style={tableCellStyle}>{detail.weight}</td>
+                      <td style={tableCellStyle}>{detail.weight} lbs</td>
+                      <td style={tableCellStyle}>{detail.current_billable_139.toFixed(1)} lbs</td>
+                      <td style={{...tableCellStyle, color: detail.current_billable_139 > detail.weight ? '#DC2626' : '#999', fontWeight: 700}}>
+                        {Math.max(detail.current_billable_139 - detail.weight, 0).toFixed(1)} lbs
+                      </td>
                       <td style={tableCellStyle}>{detail.current_zone}</td>
                       <td style={{...tableCellStyle, color: detail.zone_improvement > 0 ? '#059669' : '#666', fontWeight: detail.zone_improvement > 0 ? 700 : 400}}>
                         {detail.sc_zone}
-                      </td>
-                      <td style={tableCellStyle}>${detail.current_cost.toFixed(2)}</td>
-                      <td style={tableCellStyle}>${detail.sc_cost.toFixed(2)}</td>
-                      <td style={{...tableCellStyle, color: detail.savings_per_package > 0 ? '#059669' : '#999', fontWeight: 700}}>
-                        ${detail.savings_per_package.toFixed(2)}
                       </td>
                     </tr>
                   ))}
@@ -267,9 +271,9 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
         {/* Final CTA — always visible */}
         <div style={{marginTop: '3rem', textAlign: 'center', background: 'var(--yellow)', padding: '2rem', border: '3px solid var(--dark)', boxShadow: '4px 4px 0 var(--dark)'}}>
           <h3 style={{fontFamily: 'var(--font-display)', fontSize: '1.3rem', margin: '0 0 0.5rem 0'}}>
-            Ready to save ${annual_savings.toLocaleString('en-US', {minimumFractionDigits: 0})}/year?
+            Ready to stop paying for {total_phantom_lbs.toLocaleString('en-US', {maximumFractionDigits: 0})} lbs of air?
           </h3>
-          <p style={{margin: '0 0 1.5rem 0', color: '#1A202C'}}>Let's talk about your fulfillment strategy.</p>
+          <p style={{margin: '0 0 1.5rem 0', color: '#1A202C'}}>Let&apos;s talk about your fulfillment strategy and price your real lanes.</p>
           <Link href={`/inquiry${auditId ? `?audit_id=${auditId}` : ''}`} className="btn btn--blue" style={{padding: '0.75rem 1.5rem'}}>
             Get In Touch →
           </Link>

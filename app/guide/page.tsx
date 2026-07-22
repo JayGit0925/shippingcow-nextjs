@@ -169,7 +169,7 @@ export default function GuidePage() {
         {/* Mid-page CTA */}
         <div className="guide-cta">
           <p className="guide-cta__text">
-            Want to see your actual savings? Upload your shipment data for a free audit.
+            Want your real numbers? Upload your shipment data for a free audit.
           </p>
           <Link href="/audit" className="btn btn--blue" style={{ display: 'inline-block', padding: '0.75rem 1.5rem' }}>
             Run Free Audit →
@@ -179,10 +179,10 @@ export default function GuidePage() {
 
       <FinalCTA
         headline="Stop guessing. Start saving."
-        subtext="Upload your shipment data and see your exact savings in under 60 seconds."
+        subtext="Upload your shipment data and see exactly what your carrier is billing you for."
         primaryLabel="Run Free Audit →"
         primaryHref="/audit"
-        secondaryLabel="Calculate your savings"
+        secondaryLabel="Run the calculator"
         secondaryHref="/calculator"
       />
 
