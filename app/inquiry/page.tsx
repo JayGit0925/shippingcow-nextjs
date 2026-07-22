@@ -82,7 +82,7 @@ function InquiryInner() {
   const [busy, setBusy]     = useState(false);
   const [err, setErr]       = useState<string | null>(null);
   const [done, setDone]     = useState(false);
-  const [auditSummary, setAuditSummary] = useState<{annual_savings: number, warehouse_distribution?: Record<string, number>} | null>(null);
+  const [auditSummary, setAuditSummary] = useState<{warehouse_distribution?: Record<string, number>} | null>(null);
 
   // Step 1
   const [spend,    setSpend]    = useState('');
@@ -119,8 +119,11 @@ function InquiryInner() {
         .then((r) => r.json())
         .then((data) => {
           if (data.report_data) {
+            // No savings figure read here: /api/audit strips every dollar for
+            // unauthenticated callers (Jay decision 7, 2026-07-22), and this
+            // banner has rendered no number since f80bf2f. Reading
+            // report_data.total_savings would only produce NaN in state.
             setAuditSummary({
-              annual_savings: data.report_data.total_savings * 12,
               warehouse_distribution: data.report_data.warehouse_distribution,
             });
           }

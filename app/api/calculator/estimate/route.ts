@@ -7,6 +7,7 @@ import {
   DIM_DIVISOR_SHIPPINGCOW,
   ESTIMATED_COST_PER_LB,
 } from '@/lib/constants';
+import { hasDashboardSession, redactEstimate } from '@/lib/redact';
 
 const schema = z.object({
   length: z.number().positive().max(120),
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
     const old_estimate_per_pkg = lbs_saved * ESTIMATED_COST_PER_LB;
     const old_estimate_annual = old_estimate_per_pkg * monthly_volume * 12;
 
-    return NextResponse.json({
+    const full = {
       // Zone info
       current_zone: analysis.current_zone,
       current_distance_miles: analysis.current_distance,
@@ -96,7 +97,14 @@ export async function POST(req: Request) {
       // Old estimate for comparison
       old_estimate_per_pkg: Math.round(old_estimate_per_pkg * 100) / 100,
       old_estimate_annual: Math.round(old_estimate_annual),
-    });
+    };
+
+    // Jay 2026-07-22 (decision 7). Allowlist for anonymous callers: zones,
+    // distances, warehouse and the PUBLISHED-divisor weights only. Everything
+    // priced, plus the 225-derived weights, is withheld. DimCalculator renders
+    // none of the withheld fields, so the UI is unchanged.
+    const authed = await hasDashboardSession();
+    return NextResponse.json(authed ? full : redactEstimate(full));
   } catch (err) {
     console.error('[calculator-estimate]', err);
     return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });

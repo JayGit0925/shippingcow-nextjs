@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { analyzeShipment, type ShipmentAnalysis, getHandlingFee } from '@/lib/cost';
 import { saveAudit, getAudit } from '@/lib/db';
+import { hasDashboardSession, redactAuditReport, redactAuditRow } from '@/lib/redact';
 
 const shipmentSchema = z.object({
   origin_zip: z.string().regex(/^\d{5}$/, 'Origin ZIP must be 5 digits'),
@@ -31,7 +32,10 @@ export type AuditReport = {
   sc_zone_distribution: Record<number, number>;
   sc_zone_percentages: Record<number, number>;
 
-  // Cost summary
+  // Cost summary — INTERNAL SHAPE. This type describes the report as computed
+  // and as stored in `audits.report_data`. Every field below is stripped from
+  // the HTTP response for unauthenticated callers (lib/redact.ts, Jay decision
+  // 7, 2026-07-22), so client code must not assume they are present at runtime.
   total_current_cost: number;
   total_sc_cost: number;
   total_inbound_fees: number;
@@ -83,6 +87,15 @@ export async function GET(req: Request) {
     const audit = await getAudit(id);
     if (!audit) {
       return NextResponse.json({ error: 'Audit not found' }, { status: 404 });
+    }
+
+    // Jay 2026-07-22 (decision 7): the audit ID is emailed to the prospect, so
+    // possession of the ID is NOT authentication. Without a dashboard session
+    // every dollar field is stripped from the row and from report_data.
+    // The rendered report already shows none of them (f80bf2f).
+    const authed = await hasDashboardSession();
+    if (!authed) {
+      return NextResponse.json(redactAuditRow(audit as unknown as Record<string, unknown>));
     }
 
     return NextResponse.json(audit);
@@ -253,21 +266,27 @@ export async function POST(req: Request) {
       unmatched_count,
     };
 
-    // Save to database
+    // Save to database — the STORED report keeps every dollar field. Internal
+    // values are unchanged (Jay decision 6); only the response is redacted.
+    let auditId: string | null = null;
     try {
-      const auditId = await saveAudit({
+      auditId = await saveAudit({
         input_data: { shipment_count: shipments.length, sample: shipments.slice(0, 3) },
         report_data: report,
         row_count: total_shipments,
         total_savings: Math.round(total_savings * 100) / 100,
       });
-
-      return NextResponse.json({ ...report, id: auditId });
     } catch (dbErr) {
       console.error('[audit] DB save error:', dbErr);
       // Still return the report even if DB save fails
-      return NextResponse.json(report);
     }
+
+    // Same rule as the GET: a fresh audit run is an anonymous prospect until
+    // proven otherwise, so the response carries no dollars (decision 7).
+    const authed = await hasDashboardSession();
+    const payload = authed ? report : redactAuditReport(report as unknown as Record<string, unknown>);
+
+    return NextResponse.json(auditId ? { ...payload, id: auditId } : payload);
   } catch (err) {
     console.error('[audit]', err);
     return NextResponse.json(

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // End-to-end proof of Jay decision 7 (2026-07-22) at the HTTP boundary:
 // the same request returns physical facts only without a session, and the full
 // breakdown with one. lib/pallet is mocked so the test does not need the
-// database (the DATABASE_URL blocker in website/ISSUES.md).
+// database (the DATABASE_URL blocker in shippingcow/control-plane/CURRENT_STATE.md).
 
 const FULL = {
   sku: { name: 'Grill', length: 30, width: 24, height: 20, weight: 85 },

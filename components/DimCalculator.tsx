@@ -23,16 +23,21 @@ type ZoneResults = {
   sc_distance_miles: number;
   zone_improvement: number;
   current_billable_139: number;
-  sc_billable_225: number;
-  current_cost_per_pkg: number;
-  sc_cost_per_pkg: number;
-  inbound_cost_per_unit: number;
-  savings_per_pkg: number;
-  annual_savings: number;
-  dim139: number; dim166: number; dim225: number;
-  bill139: number; bill166: number; bill225: number;
-  old_estimate_per_pkg: number;
-  old_estimate_annual: number;
+  dim139: number; dim166: number;
+  bill139: number; bill166: number;
+  // Optional on purpose: /api/calculator/estimate returns these only to an
+  // authenticated dashboard session (lib/redact.ts, Jay decision 7,
+  // 2026-07-22). This component renders none of them; the optional marker
+  // stops anyone re-adding a render path that would print `undefined`.
+  sc_billable_225?: number;
+  dim225?: number; bill225?: number;
+  current_cost_per_pkg?: number;
+  sc_cost_per_pkg?: number;
+  inbound_cost_per_unit?: number;
+  savings_per_pkg?: number;
+  annual_savings?: number;
+  old_estimate_per_pkg?: number;
+  old_estimate_annual?: number;
 };
 
 // ---- Math helpers ----
