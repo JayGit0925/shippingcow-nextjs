@@ -231,14 +231,20 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
 
           <Section title="Inbound Cost Breakdown">
             <p style={{color: '#666', marginBottom: '1.5rem', fontSize: '0.95rem'}}>
-              Inbound LTL cost is amortized per unit based on pallet capacity (1.8 CBM/pallet at $2.50/mile).
-              SC selects the warehouse closest to your origin to minimize inbound freight.
+              SC selects the warehouse closest to your origin to shorten the inbound leg. Below is how your
+              SKUs pallet out and how far each shipment has to travel inbound — the physical facts your
+              inbound freight is priced on.
             </p>
+            {/* Dollar columns (Pallet Cost, Inbound / Unit) removed 2026-07-22 (Jay,
+                decision 7): both derive from LTL_COST_PER_MILE, an internal placeholder
+                coefficient. The values remain on the API response and the stored lead
+                record for internal use. Do not re-add a dollar column here without a
+                logged decision. */}
             <div style={{overflowX: 'auto'}}>
               <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem'}}>
                 <thead>
                   <tr style={{background: '#F4F7FF', borderBottom: '2px solid var(--dark)'}}>
-                    {['Origin','SC Inbound Warehouse','Inbound Distance','Dims','Product CBM','Units / Pallet','Pallet Cost','Inbound / Unit'].map(h => (
+                    {['Origin','SC Inbound Warehouse','Inbound Distance','Dims','Product CBM','Units / Pallet'].map(h => (
                       <th key={h} style={tableHeaderStyle}>{h}</th>
                     ))}
                   </tr>
@@ -246,7 +252,6 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
                 <tbody>
                   {shipment_details.map((detail, i) => {
                     const product_cbm = (detail.length * detail.width * detail.height) / 61023.7;
-                    const pallet_cost = detail.inbound_warehouse_distance * 2.50;
                     return (
                       <tr key={i} style={{borderBottom: '1px solid #E5E7EB', background: i % 2 === 0 ? '#fff' : '#F9FAFB'}}>
                         <td style={tableCellStyle}>{detail.origin_zip}</td>
@@ -255,8 +260,6 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
                         <td style={tableCellStyle}>{detail.length}×{detail.width}×{detail.height}</td>
                         <td style={tableCellStyle}>{product_cbm.toFixed(3)} m³</td>
                         <td style={tableCellStyle}>{detail.units_per_pallet}</td>
-                        <td style={tableCellStyle}>${pallet_cost.toFixed(2)}</td>
-                        <td style={{...tableCellStyle, fontWeight: 600}}>${detail.inbound_cost_per_unit?.toFixed(2) ?? '—'}</td>
                       </tr>
                     );
                   })}
@@ -387,7 +390,7 @@ function PalletCalculator() {
   };
 
   return (
-    <Section title="Inbound Pallet Costs">
+    <Section title="Inbound Pallet Planner">
       <div style={{marginTop: '2rem'}}>
         <div style={{background: '#F9FAFB', border: '2px solid #E5E7EB', borderRadius: '6px', padding: '1.5rem', marginBottom: '2rem'}}>
           <div style={{marginBottom: '1.5rem'}}>
@@ -418,16 +421,20 @@ function PalletCalculator() {
           </div>
           {error && <div style={{background: '#FEE2E2', border: '2px solid #DC2626', color: '#7F1D1D', padding: '1rem', borderRadius: '6px', marginBottom: '1.5rem'}}>❌ {error}</div>}
           <button onClick={calculatePallets} disabled={loading} className="btn btn--blue" style={{width: '100%', padding: '0.75rem'}}>
-            {loading ? '🔄 Calculating...' : '📦 Calculate Pallet Costs'}
+            {loading ? '🔄 Calculating...' : '📦 Calculate Pallet Layout'}
           </button>
         </div>
         {results && (
           <div>
             <div style={{marginBottom: '1.5rem', background: '#F0FDF4', border: '2px solid #86EFAC', borderRadius: '6px', padding: '1.5rem'}}>
               <div style={{fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem'}}>✅ Results for {results.sku_count} SKU{results.sku_count !== 1 ? 's' : ''}</div>
-              <div>Total inbound cost: <strong style={{color: 'var(--blue)', fontSize: '1.3rem'}}>${results.totals.total_pallet_cost.toFixed(2)}</strong></div>
-              <div style={{fontSize: '0.9rem', color: '#666', marginTop: '0.5rem'}}>
-                {results.totals.total_units_per_pallet} total units, ${results.totals.avg_cost_per_unit.toFixed(2)} cost per unit (all-in)
+              <div style={{fontSize: '0.95rem'}}>
+                <strong>{results.totals.total_units_per_pallet}</strong> units across your pallets, into the
+                warehouse closest to your origin.
+              </div>
+              <div style={{fontSize: '0.9rem', color: '#555', marginTop: '0.5rem'}}>
+                We are not printing a price here. Inbound freight depends on your real lane, pallet
+                configuration and cadence — send us your profile and we will quote it properly.
               </div>
             </div>
             <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem'}}>
@@ -437,14 +444,16 @@ function PalletCalculator() {
                     {r.sku.name || `SKU ${i + 1}`}
                   </div>
                   <div style={{fontSize: '0.9rem', lineHeight: '1.8', color: '#666'}}>
+                    {/* Dollar rows (trucking_cost, inbound_receiving, per_unit.total,
+                        pallet_total) removed 2026-07-22 (Jay, decision 7). per_unit.total
+                        is built on getShippingRate(billable_225), i.e. DIM_DIVISOR_SHIPPINGCOW;
+                        trucking_cost on LTL_COST_PER_MILE. Both are internal working values
+                        and no prospect sees a price derived from them. The API still returns
+                        them for internal use. */}
                     <div><strong>Warehouse:</strong> {r.closest_warehouse} ({r.warehouse_city}, {r.warehouse_state})</div>
-                    <div><strong>Trucking:</strong> {r.trucking_distance_miles.toFixed(0)} mi → ${r.trucking_cost.toFixed(2)}</div>
+                    <div><strong>Inbound distance:</strong> {r.trucking_distance_miles.toFixed(0)} mi</div>
                     <div><strong>Units/pallet:</strong> {r.units_per_pallet}</div>
-                    <div><strong>Receiving:</strong> ${r.inbound_receiving.toFixed(2)}</div>
-                    <div style={{marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #E5E7EB', fontSize: '0.85rem', fontWeight: 600}}>
-                      <div>Per-unit (all-in): ${r.per_unit.total.toFixed(2)}</div>
-                      <div style={{color: 'var(--blue)', fontSize: '1.1rem', marginTop: '0.5rem'}}>Pallet Total: ${r.pallet_total.toFixed(2)}</div>
-                    </div>
+                    <div><strong>Unit weight:</strong> {r.sku.weight} lbs</div>
                   </div>
                 </div>
               ))}

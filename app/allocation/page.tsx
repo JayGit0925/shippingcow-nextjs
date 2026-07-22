@@ -187,9 +187,13 @@ export default function AllocationPage() {
               <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', color: '#3a4454' }}>Pallets</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 900 }}>{result.total_pallets}</div>
             </div>
+            {/* Inbound LTL dollar tile removed 2026-07-22 (Jay, decision 7): derived
+                from LTL_COST_PER_MILE, an internal placeholder coefficient. Replaced
+                with the physical fact it was standing in for. Value still returned by
+                the API for internal use. */}
             <div>
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', color: '#3a4454' }}>Inbound LTL /mo</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 900 }}>${result.total_inbound_ltl_cost.toLocaleString()}</div>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', color: '#3a4454' }}>Total Inbound Miles</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 900 }}>{fmtNum(result.warehouses.reduce((a, w) => a + w.inbound_distance_miles, 0))}</div>
             </div>
             {/* Savings tile removed 2026-07-22 (Jay): derived from
                 ZONE_RATE_MULTIPLIER, a placeholder coefficient. Not shown to
@@ -208,7 +212,9 @@ export default function AllocationPage() {
               </div>
               <div style={{ padding: '0.8rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', fontSize: '0.85rem', borderBottom: '1px solid #e5e7eb' }}>
                 <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Inbound dist</span><br />{wh.inbound_distance_miles.toLocaleString()} mi</div>
-                <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Inbound LTL /mo</span><br />${wh.inbound_ltl_cost.toLocaleString()}</div>
+                {/* Per-warehouse inbound LTL dollars removed 2026-07-22 (Jay, decision 7):
+                    LTL_COST_PER_MILE-derived. */}
+                <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>SKUs</span><br />{wh.skus.length}</div>
                 <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Units</span><br />{wh.total_units.toLocaleString()}</div>
                 <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Pallets</span><br /><strong>{wh.total_pallets}</strong></div>
               </div>
