@@ -5,27 +5,35 @@ import { useState, useCallback } from 'react';
 type SkuRow = { sku: string; label: string; length: number; width: number; height: number; weight: number; qty: number };
 type DestRow = { zip: string; pct: number };
 
+// Dollar fields are OPTIONAL on purpose: /api/allocation strips every
+// currency field for unauthenticated callers (lib/redact.ts, Jay decision 7,
+// 2026-07-22). Only a dashboard session ever sees them. This page renders none
+// of them — the types keep them optional so nobody re-adds a render path and
+// gets a silently-undefined dollar amount past the compiler.
 type WhSkus = {
   sku: string; label: string; warehouse: string;
   units: number; pallets: number; units_per_pallet: number;
-  inbound_distance_miles: number; inbound_cost_total: number;
-  outbound_savings_per_pkg: number;
-  outbound_monthly_savings: number; outbound_annual_savings: number;
+  inbound_distance_miles: number;
+  inbound_cost_total?: number;
+  outbound_cost_per_pkg?: number;
+  outbound_savings_per_pkg?: number;
+  outbound_monthly_savings?: number; outbound_annual_savings?: number;
 };
 
 type WhSummary = {
   warehouse: string; warehouse_zip: string;
   total_units: number; total_pallets: number;
-  inbound_distance_miles: number; inbound_ltl_cost: number;
-  weighted_savings_per_pkg: number;
+  inbound_distance_miles: number;
+  inbound_ltl_cost?: number;
+  weighted_savings_per_pkg?: number;
   skus: WhSkus[];
 };
 
 type Result = {
   origin_zip: string; label: string | null;
   total_units: number; total_pallets: number;
-  total_inbound_ltl_cost: number;
-  total_monthly_savings: number; total_annual_savings: number;
+  total_inbound_ltl_cost?: number;
+  total_monthly_savings?: number; total_annual_savings?: number;
   warehouses: WhSummary[];
   errors: string[];
 };

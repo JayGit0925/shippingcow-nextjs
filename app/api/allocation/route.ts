@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { allocateInbound } from '@/lib/allocation';
+import { hasDashboardSession, redactAllocResult } from '@/lib/redact';
 
 const itemSchema = z.object({
   sku: z.string().min(1),
@@ -37,7 +38,13 @@ export async function POST(req: Request) {
     }
 
     const result = await allocateInbound(parsed.data);
-    return NextResponse.json(result);
+
+    // Jay 2026-07-22 (decision 7): unauthenticated callers get pallets, units
+    // and miles — no LTL dollars (LTL_COST_PER_MILE), no outbound cost or
+    // savings (DIM_DIVISOR_SHIPPINGCOW / ZONE_RATE_MULTIPLIER /
+    // ESTIMATED_COST_PER_LB). Dashboard sessions get the full result.
+    const authed = await hasDashboardSession();
+    return NextResponse.json(authed ? result : redactAllocResult(result));
   } catch (err) {
     console.error('[allocation]', err);
     return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });

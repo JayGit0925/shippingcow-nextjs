@@ -78,8 +78,6 @@ export type PalletInboundCost = {
 
   pallet_total: number;
   cost_per_unit_all_in: number;
-
-  note: string;
 };
 
 /**
@@ -165,7 +163,8 @@ export async function palletInboundCost(
 
     pallet_total,
     cost_per_unit_all_in,
-
-    note: 'Trucking cost is estimated at $2.50/mile. Actual quote will be confirmed within 24 hours of your inquiry.',
+    // `note` removed 2026-07-22 (Jay): it printed a price to the customer and
+    // the number in it (2.50) did not match LTL_COST_PER_MILE. String only —
+    // no computed value changed.
   };
 }
