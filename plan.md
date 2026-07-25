@@ -1,3 +1,7 @@
+> **SUPERSEDED 2026-07-25.** Do not execute from this file. The Chat Widget v2 build described here SHIPPED; remaining widget work is specced as workstream WS-B (TSK-WEB-04/05) in the website PRD:
+> https://github.com/JayGit0925/logistar/blob/main/shippingcow/website/prd_website_shippingcow_2026-07-25.md
+> Kept for schema/rollback reference only.
+
 # Chat Widget v2 — Build Plan
 
 **Objective:** Upgrade ChatWidget from passive Haiku bot to lead-generating conversion machine.  
