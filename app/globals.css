@@ -3,7 +3,9 @@
    Imported from the brand style guide (v1.0)
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=DM+Sans:wght@400;500;700&family=Press+Start+2P&display=swap');
+/* Fonts are self-hosted via next/font in app/layout.tsx, which defines
+   --font-display / --font-body / --font-pixel on <html>. Do not re-add a
+   Google Fonts @import here — it render-blocks first paint. */
 
 :root {
   --blue: #0052C9;
@@ -17,9 +19,6 @@
   --shadow-pixel: 4px 4px 0 var(--dark);
   --shadow-pixel-sm: 2px 2px 0 var(--dark);
   --shadow-pixel-lg: 6px 6px 0 var(--dark);
-  --font-display: 'Black Han Sans', 'Boogaloo', sans-serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
-  --font-pixel: 'Press Start 2P', monospace;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -264,8 +263,11 @@ img, svg { max-width: 100%; display: block; }
 
 @media (max-width: 900px) {
   .hero__grid { grid-template-columns: 1fr; gap: 2rem; }
-  .hero__art { order: -1; min-height: 280px; }
-  .hero__art-frame { max-width: 320px; }
+  /* Art stays BELOW the copy on mobile: with order:-1 it pushed the first
+     CTA to y≈1004 on a 375×667 viewport (2026-07-25 QA fail). Headline,
+     subhead, and CTA must own the first screen. */
+  .hero__art { min-height: 240px; }
+  .hero__art-frame { max-width: 280px; }
 }
 
 /* ============ TRACKING WIDGET ============ */
@@ -643,7 +645,12 @@ img, svg { max-width: 100%; display: block; }
 /* ============ RESPONSIVE TWEAKS ============ */
 @media (max-width: 600px) {
   .section { padding: 3.5rem 0; }
-  .hero { padding: 2.5rem 0 3.5rem; }
+  /* Tightened so the primary CTA's full height clears a 667px fold
+     (375×667 QA gate) — measured, not aesthetic; re-verify if edited. */
+  .hero { padding: 1.25rem 0 3rem; }
+  .hero__eyebrow { font-size: 0.55rem; margin-bottom: 1rem; }
+  .hero h1 { font-size: 1.85rem; }
+  .hero__sub { font-size: 0.98rem; margin-bottom: 1.3rem; }
   .form-card { padding: 1.5rem; }
 }
 
