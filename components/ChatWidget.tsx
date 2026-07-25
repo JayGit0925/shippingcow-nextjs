@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, FormEvent, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import type { Message } from '@/lib/types';
+import { isHighIntentPath } from '@/lib/widget-paths';
 
 // ─── Session storage ────────────────────────────────────────────────────────
 
@@ -228,7 +229,7 @@ export default function ChatWidget() {
 
     // Don't trigger auto-open in first 3 seconds of page load
     const initDelay = setTimeout(() => {
-      const shortDelay = pathname?.startsWith('/calculator') || pathname?.startsWith('/audit');
+      const shortDelay = isHighIntentPath(pathname);
       timer = setTimeout(attemptAutoOpen, shortDelay ? 10_000 : 30_000);
       document.addEventListener('mouseleave', handleMouseLeave);
     }, 3_000);
