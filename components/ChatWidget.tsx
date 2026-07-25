@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, FormEvent, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import type { Message } from '@/lib/types';
+import { isHighIntentPath } from '@/lib/widget-paths';
 
 // ─── Session storage ────────────────────────────────────────────────────────
 
@@ -152,13 +153,17 @@ export default function ChatWidget() {
     setSessionId(sid);
     const ctx = getCalculatorContext();
     setCalcContext(ctx);
-    setIsMobile(window.innerWidth < 768);
+
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener('resize', onResize);
 
     const stored = loadMessages();
     if (stored.length > 0) {
       setMessages(stored);
     }
     // Opener is set below via the pathname effect
+    return () => window.removeEventListener('resize', onResize);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Recompute opener when pathname changes — but only if no message history exists
@@ -228,7 +233,7 @@ export default function ChatWidget() {
 
     // Don't trigger auto-open in first 3 seconds of page load
     const initDelay = setTimeout(() => {
-      const shortDelay = pathname?.startsWith('/calculator') || pathname?.startsWith('/audit');
+      const shortDelay = isHighIntentPath(pathname);
       timer = setTimeout(attemptAutoOpen, shortDelay ? 10_000 : 30_000);
       document.addEventListener('mouseleave', handleMouseLeave);
     }, 3_000);
@@ -283,6 +288,7 @@ export default function ChatWidget() {
     setEmailCaptured(false);
     setCaptureMode(false);
     setUserMsgCount(0);
+    setSkipMsgCount(0);
   }
 
   const doSend = useCallback(async (text: string) => {
@@ -540,7 +546,7 @@ export default function ChatWidget() {
                       onClick={() => { setSkipMsgCount(userMsgCount); setCaptureMode(false); }}
                       style={{ background: 'transparent', color: '#6B7280', border: '1px solid #D1D5DB', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem' }}
                     >
-                      Skip
+                      Not now
                     </button>
                   </div>
                 </form>
