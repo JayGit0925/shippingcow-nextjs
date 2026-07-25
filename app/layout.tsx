@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Black_Han_Sans, DM_Sans, Press_Start_2P } from 'next/font/google';
 import './globals.css';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
@@ -45,9 +46,31 @@ export const metadata: Metadata = {
   },
 };
 
+// Self-hosted via next/font — replaces the render-blocking Google Fonts
+// @import that serialized CSS → fonts.googleapis.com → font files before
+// first paint (the LCP bottleneck found in the 2026-07-25 PR #6 QA).
+const fontDisplay = Black_Han_Sans({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-display',
+});
+const fontBody = DM_Sans({
+  weight: ['400', '500', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-body',
+});
+const fontPixel = Press_Start_2P({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-pixel',
+});
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${fontDisplay.variable} ${fontBody.variable} ${fontPixel.variable}`}>
       <body>
         <Nav />
         {children}
