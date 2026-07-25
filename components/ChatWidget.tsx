@@ -284,6 +284,7 @@ export default function ChatWidget() {
     setEmailCaptured(false);
     setCaptureMode(false);
     setUserMsgCount(0);
+    setSkipMsgCount(0);
   }
 
   const doSend = useCallback(async (text: string) => {
