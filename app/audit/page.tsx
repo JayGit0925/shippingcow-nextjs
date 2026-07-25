@@ -151,12 +151,17 @@ function UploadView({state, onFile, onRun, fileInputRef}: {
         <section style={{paddingTop: '3rem', paddingBottom: '3rem'}}>
           <div style={{textAlign: 'center', marginBottom: '3rem'}}>
             <h1 style={{fontSize: '2.2rem', fontFamily: 'var(--font-display)'}}>
-              Upload Your <span style={{color: 'var(--blue)'}}>Shipment Data</span>
+              Free Cost Audit: Upload Your <span style={{color: 'var(--blue)'}}>Shipment Data</span>
             </h1>
             <p style={{fontSize: '1.05rem', color: '#666', marginTop: '0.5rem'}}>
-              See exactly how much you could save with ShippingCow's DIM 225 pricing and smart routing.
+              We read your shipments line by line — dimensional weight, surcharges, and zone penalties on your
+              50–149&nbsp;lb parcels — and show you exactly what you are being billed for. No signup, no sales call.
             </p>
           </div>
+
+          <h2 style={{fontFamily: 'var(--font-display)', fontSize: '1.3rem', textTransform: 'uppercase', marginBottom: '0.75rem'}}>
+            1. Upload your file
+          </h2>
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); const file = e.dataTransfer.files[0]; if (file) onFile(file); }}
@@ -209,6 +214,29 @@ function UploadView({state, onFile, onRun, fileInputRef}: {
               <button onClick={onRun} className="btn btn--blue" style={{width: '100%', padding: '0.75rem'}}>🚀 Run My Audit</button>
             </div>
           )}
+
+          <section style={{marginTop: '3rem'}}>
+            <h2 style={{fontFamily: 'var(--font-display)', fontSize: '1.3rem', textTransform: 'uppercase', marginBottom: '0.75rem'}}>
+              2. What we look at
+            </h2>
+            <ul style={{fontSize: '0.98rem', color: '#3a4454', lineHeight: 1.7, paddingLeft: '1.2rem'}}>
+              <li>Dimensional weight — how many pounds you are billed for above what the box actually weighs.</li>
+              <li>Zone distribution — how much of your volume is landing in Zone 7–8 and why.</li>
+              <li>Accessorial and surcharge lines — the ones that never make it into your per-package math.</li>
+              <li>Your 50–149&nbsp;lb parcels specifically. That band is what we are built for.</li>
+            </ul>
+          </section>
+
+          <section style={{marginTop: '2.5rem'}}>
+            <h2 style={{fontFamily: 'var(--font-display)', fontSize: '1.3rem', textTransform: 'uppercase', marginBottom: '0.75rem'}}>
+              3. What you get back
+            </h2>
+            <p style={{fontSize: '0.98rem', color: '#3a4454', lineHeight: 1.7}}>
+              A written breakdown of your current shipping cost structure and where it is leaking, plus our read on
+              whether the 50–149&nbsp;lb band is where your margin is going. If we are not the right fit for your
+              profile we will say so — we would rather tell you than sell you.
+            </p>
+          </section>
         </section>
       </div>
     </div>
@@ -223,7 +251,7 @@ function ProcessingView({state}: {state: ProcessingState}) {
         <h2 style={{fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: '0.5rem'}}>
           Analyzing {state.count} shipments...
         </h2>
-        <p style={{color: '#666', marginBottom: '1rem'}}>We're calculating your zone-based routing and DIM weight savings.</p>
+        <p style={{color: '#666', marginBottom: '1rem'}}>We&apos;re reading your zone distribution and dimensional weight, line by line.</p>
         <div style={{height: '4px', background: '#E5E7EB', borderRadius: '2px', overflow: 'hidden', marginTop: '2rem'}}>
           <div style={{height: '100%', background: 'var(--blue)', width: '60%', animation: 'pulse 1s infinite'}} />
         </div>

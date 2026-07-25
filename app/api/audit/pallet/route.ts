@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { palletInboundCost } from '@/lib/pallet';
+import { hasDashboardSession, redactPalletResult } from '@/lib/redact';
 
 // Validation schema for pallet calculator request
 const PalletRequestSchema = z.object({
@@ -37,12 +38,31 @@ export async function POST(req: NextRequest) {
     // Aggregate results
     const totalPalletCost = results.reduce((sum, r) => (r ? sum + r.pallet_total : sum), 0);
     const totalUnitsPerPallet = results.reduce((sum, r) => (r ? sum + r.units_per_pallet : sum), 0);
+    const found = results.filter((r) => r !== null) as NonNullable<typeof results[number]>[];
+
+    // Jay 2026-07-22 (decision 7): prospects get physical facts only. Every
+    // dollar field here descends from LTL_COST_PER_MILE or from
+    // getShippingRate(billable_225), i.e. DIM_DIVISOR_SHIPPINGCOW.
+    // Authenticated dashboard callers still receive the full breakdown.
+    const authed = await hasDashboardSession();
+
+    if (!authed) {
+      return NextResponse.json({
+        success: true,
+        origin_zip,
+        sku_count: skus.length,
+        results: found.map(redactPalletResult),
+        totals: {
+          total_units_per_pallet: totalUnitsPerPallet,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
       origin_zip,
       sku_count: skus.length,
-      results: results.filter((r) => r !== null),
+      results: found,
       totals: {
         total_pallet_cost: Math.round(totalPalletCost * 100) / 100,
         total_units_per_pallet: totalUnitsPerPallet,

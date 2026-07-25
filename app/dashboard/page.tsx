@@ -37,10 +37,10 @@ export default async function DashboardPage() {
               Run your numbers first
             </div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: 900, textTransform: 'uppercase' }}>
-              See Your DIM 225 Savings
+              See What You&apos;re Billed For
             </div>
             <div style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.8)', marginTop: '0.3rem' }}>
-              Enter your package dimensions and see exactly how much DIM 225 saves you vs UPS/FedEx.
+              Enter your package dimensions and see the billable weight your carrier charges at the published DIM divisors.
             </div>
           </div>
           <Link href="/calculator" className="btn" style={{ background: 'var(--yellow)', color: 'var(--dark)', border: '3px solid var(--dark)', whiteSpace: 'nowrap' }}>

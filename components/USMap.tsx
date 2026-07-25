@@ -9,11 +9,11 @@ type TileState = {
   name: string;
   col: number;
   row: number;
-  zone: 1 | 2 | 3; // 1=1-day, 2=2-day, 3=3-day
+  zone: 1 | 2 | 3; // proximity band to the nearest warehouse, not a transit-time promise
 };
 
 const ZONE_COLOR = { 1: '#0052C9', 2: '#3A7FDE', 3: '#B0C8F0' } as const;
-const ZONE_LABEL = { 1: '1–2 Day', 2: '2 Day', 3: '2–3 Day' } as const;
+const ZONE_LABEL = { 1: 'Closest', 2: 'Near', 3: 'Covered' } as const;
 
 // 10 cols × 8 rows pixel tile map
 const TILES: TileState[] = [
@@ -204,9 +204,9 @@ export default function USMap() {
         letterSpacing: '0.06em',
       }}>
         {[
-          { color: '#0052C9', label: '1–2 Day Delivery' },
-          { color: '#3A7FDE', label: '2 Day Delivery' },
-          { color: '#B0C8F0', label: '2–3 Day Delivery' },
+          { color: '#0052C9', label: 'Closest to a Warehouse' },
+          { color: '#3A7FDE', label: 'Near a Warehouse' },
+          { color: '#B0C8F0', label: 'Covered' },
           { color: '#FEB81B', label: '★ Warehouse' },
         ].map(l => (
           <span key={l.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#fff' }}>

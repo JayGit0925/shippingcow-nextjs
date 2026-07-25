@@ -53,13 +53,12 @@ Let's use a specific example: a 65-lb weight bench in a 40×24×14" box.
 
 Volume: 40 × 24 × 14 = 13,440 cubic inches.
 
-| Carrier | Divisor | DIM Weight | Billable Weight | Est. Cost (Zone 5) |
-|---|---|---|---|---|
-| UPS / FedEx | 139 | 96.7 lbs | 96.7 lbs | ~$52 |
-| Typical 3PL | 166 | 80.9 lbs | 80.9 lbs | ~$44 |
-| ShippingCow | 225 | 59.7 lbs | 65 lbs (actual) | ~$29 |
+| Carrier | Divisor | DIM Weight | Billable Weight |
+|---|---|---|---|
+| UPS / FedEx | 139 | 96.7 lbs | 96.7 lbs |
+| Typical 3PL | 166 | 80.9 lbs | 80.9 lbs |
 
-The difference between UPS/FedEx and ShippingCow on this one product: **$23 per shipment**. If you ship 300 of these per month, that's $6,900/month — $82,800 per year.
+On a 65 lb product you are billed for 96.7 lbs at the published 139 divisor. That is 31.7 lbs of air, on every single unit, forever.
 
 That's not a rounding error. That's whether your product line is profitable.
 
@@ -67,20 +66,20 @@ That's not a rounding error. That's whether your product line is profitable.
 
 ShippingCow addresses the Death Zone through two mechanisms, not just one.
 
-The DIM 225 divisor handles the billable weight problem. But zone-skip routing handles the zone amplification problem.
+Right-sizing the billable weight is one half. Zone-skip routing handles the other half — the zone amplification problem.
 
 Instead of shipping from your location (or a single warehouse) to customers across the country, we trunk inventory to three injection points: New Jersey, Texas, and California. From there, packages enter the carrier network at Zone ≤ 4 for the vast majority of US ZIP codes.
 
-Zone 4 vs. Zone 8 on a 65-lb package: roughly $12-18 difference per shipment, depending on carrier.
+Zone 4 versus Zone 8 on a 65-lb package is a materially different rate on the same box, with the same contents, to the same customer.
 
-Combined — DIM 225 plus zone-skip — the total savings on Death Zone products typically runs 35–50% compared to direct carrier shipping.
+How much the two levers are worth together depends entirely on your SKU mix and your ZIP distribution. That is what the audit measures — we are not going to hand you an average that has nothing to do with your business.
 
 ## What You Can Do Today
 
-Run your top three SKUs through our [DIM Weight Calculator](/calculator). Enter the box dimensions, actual weight, and monthly volume. The calculator will show you exactly what you're paying today vs. what DIM 225 would cost — and project your annual savings.
+Run your top three SKUs through our [DIM Weight Calculator](/calculator). Enter the box dimensions, actual weight, and monthly volume. The calculator will show you exactly what your carrier is billing you for today at the published divisors.
 
 If the numbers look significant (they usually do for Death Zone products), submit those dimensions at [/inquiry](/inquiry) for a full cost audit. We'll run every ZIP in your delivery network and build a custom savings model.
 
 ---
 
-*ShippingCow is built specifically for the 50 lb+ seller. DIM 225. Zero shrinkage. 2-day guaranteed delivery. [Get your free audit →](/inquiry)*
+*ShippingCow is the self-operated US 3PL built for 50–149 lb heavy DTC parcels. [Get your free cost audit →](/inquiry)*

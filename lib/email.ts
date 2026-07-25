@@ -114,7 +114,7 @@ export async function sendLeadFollowup(params: {
 
   const displayName = params.name || 'there';
   const savingsLine = params.annualSavings
-    ? `Based on your earlier calculation, you could save <strong>$${Math.round(params.annualSavings).toLocaleString()}/year</strong> with DIM 225 pricing and smart routing.`
+    ? 'Based on the box you ran through our calculator, your carrier is billing you for a meaningful amount of weight you never shipped.'
     : 'Based on your product dimensions, you may be significantly overpaying for shipping.';
 
   try {
@@ -172,8 +172,8 @@ export async function sendGuideEmail(to: string, name: string): Promise<{ ok: tr
             <p>Hi ${escapeHtml(displayName)},</p>
             <p>Here's the quick-start guide to cutting your heavy parcel shipping costs. The math works for any product in the 50-150 lb range.</p>
 
-            <h3 style="color: #0052C9; margin: 24px 0 8px;">1. DIM 225 — The 30% Hack</h3>
-            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Standard carriers use a DIM divisor of 139, billing you for phantom weight. At DIM 225, your package bills at actual weight. A 40 lb bike in a standard box drops from 52 lb billable to 40 lb — 30% savings on every shipment.</p>
+            <h3 style="color: #0052C9; margin: 24px 0 8px;">1. Dimensional Weight — Know Your Number</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: #374151;">Standard carriers use a published DIM divisor of 139, which bills you for phantom weight. A 40 lb bike in a standard box bills at 52 lb — 12 lb you never shipped. Multiply that across a year of orders before you accept your next rate sheet.</p>
 
             <h3 style="color: #0052C9; margin: 24px 0 8px;">2. Fuel Surcharge Waivers</h3>
             <p style="font-size: 14px; line-height: 1.6; color: #374151;">Fuel surcharges add 8-15% to every bill. They're applied post-discount, so they eat into your negotiated rates. Carrier contracts that price fuel below the published market rate shrink this hidden tax.</p>
@@ -192,7 +192,7 @@ export async function sendGuideEmail(to: string, name: string): Promise<{ ok: tr
                 Run Your Free Audit →
               </a>
             </div>
-            <p style="font-size: 13px; color: #666; text-align: center;">Upload your shipment data. See your exact savings in under 60 seconds.</p>
+            <p style="font-size: 13px; color: #666; text-align: center;">Upload your shipment data. See exactly what you are being billed for.</p>
 
             <p style="margin-top: 32px;">— The Shipping Cow Team 🐄</p>
             <p style="font-size: 12px; color: #9CA3AF; margin-top: 16px;">P.S. Want personalized numbers? Reply to this email with your monthly volume and we'll run the calc for you.</p>
@@ -208,23 +208,26 @@ export async function sendGuideEmail(to: string, name: string): Promise<{ ok: tr
   }
 }
 
+// NOTE: this email deliberately quotes NO savings figure. The savings math is
+// built on ESTIMATED_COST_PER_LB / ZONE_RATE_MULTIPLIER, which are placeholder
+// coefficients (Jay, 2026-07-22). The internal value is still stored on the
+// audit record and still fires to Slack for the team — it just never reaches
+// the customer.
 export async function sendAuditReport(
   to: string,
   auditId: string,
-  annualSavings: number,
   siteUrl: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const client = getClient();
   if (!client) return { ok: false, error: 'Email not configured' };
 
   const reportUrl = `${siteUrl}/audit/report/${auditId}`;
-  const savings = annualSavings.toLocaleString('en-US', { minimumFractionDigits: 0 });
 
   try {
     await client.emails.send({
       from,
       to,
-      subject: `🐄 Your ShippingCow Audit — $${savings}/yr in potential savings`,
+      subject: '🐄 Your ShippingCow audit is ready',
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1A202C;">
           <div style="background: #0052C9; color: #fff; padding: 24px; text-align: center; border: 4px solid #1A202C;">
@@ -232,7 +235,7 @@ export async function sendAuditReport(
             <p style="margin: 8px 0 0; color: #FEB81B;">Your shipment audit is ready</p>
           </div>
           <div style="background: #fff; padding: 24px; border: 4px solid #1A202C; border-top: 0;">
-            <p>Here's your full audit report showing <strong>$${savings}/year</strong> in potential savings.</p>
+            <p>Here's your full audit report — including exactly how many pounds of phantom weight your carrier is billing you for, and how your shipments are distributed across zones.</p>
             <div style="text-align: center; margin: 32px 0;">
               <a href="${reportUrl}" style="background: #0052C9; color: #fff; padding: 14px 28px; text-decoration: none; font-weight: 700; border: 3px solid #1A202C; display: inline-block;">
                 View Full Report →

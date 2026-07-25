@@ -90,7 +90,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                   DIM Weight Calculator
                 </h3>
                 <p style={{ fontSize: '0.82rem', color: '#3a4454', marginBottom: '0.8rem' }}>
-                  See exactly how much DIM 225 saves you on your own package dimensions.
+                  See the billable weight your carrier charges on your own package dimensions.
                 </p>
                 <Link href="/calculator" className="btn btn--sm" style={{ background: 'var(--dark)', color: '#fff', display: 'block', textAlign: 'center' }}>
                   Open Calculator →

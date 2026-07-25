@@ -11,7 +11,7 @@ export default function Footer() {
               <span>Shipping Cow</span>
             </div>
             <p className="footer__about">
-              The AI-native logistics platform for heavy-goods e-commerce. Enterprise rates, zero shrinkage, guaranteed 2-day delivery — no bull.
+              The self-operated US 3PL built for 50–149 lb heavy DTC parcels. Enterprise carrier rates, our own warehouse floor — no bull.
             </p>
           </div>
 

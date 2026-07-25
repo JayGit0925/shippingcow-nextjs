@@ -18,6 +18,9 @@ export type Post = PostMeta & {
   content: string;
 };
 
+// A post with `draft: true` in its frontmatter is unpublished: it is excluded
+// from the index, the sitemap, and the RSS feed, and its route does not render.
+// The file stays on disk so nothing is lost and the slug can be redirected.
 export function getAllPosts(): PostMeta[] {
   if (!fs.existsSync(BLOG_DIR)) return [];
 
@@ -28,6 +31,7 @@ export function getAllPosts(): PostMeta[] {
       const slug = filename.replace(/\.(mdx|md)$/, '');
       const raw  = fs.readFileSync(path.join(BLOG_DIR, filename), 'utf8');
       const { data } = matter(raw);
+      if (data.draft === true) return null;
       return {
         slug,
         title:       data.title       ?? slug,
@@ -38,6 +42,7 @@ export function getAllPosts(): PostMeta[] {
         author:      data.author,
       } as PostMeta;
     })
+    .filter((p): p is PostMeta => p !== null)
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
@@ -49,6 +54,7 @@ export function getPost(slug: string): Post | null {
 
   const raw = fs.readFileSync(filePath, 'utf8');
   const { data, content } = matter(raw);
+  if (data.draft === true) return null;
 
   return {
     slug,

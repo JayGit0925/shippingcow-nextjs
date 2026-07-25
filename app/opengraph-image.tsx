@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'ShippingCow — Heavy Goods Fulfillment with DIM 225 Pricing';
+export const alt = 'ShippingCow — The Self-Operated US 3PL Built for 50–149 lb Parcels';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -51,16 +51,15 @@ export default function OgImage() {
 
         {/* Sub */}
         <div style={{ color: '#9ca3af', fontSize: 28, marginBottom: 56, maxWidth: 800 }}>
-          DIM divisor 225. Three warehouses. 2-day delivery to 92% of the US.
+          The self-operated US 3PL built for 50–149 lb parcels.
         </div>
 
         {/* Stats row */}
         <div style={{ display: 'flex', gap: 48 }}>
           {[
-            { num: '÷225', label: 'DIM Divisor' },
-            { num: '39%', label: 'Lower Billing' },
-            { num: 'DIM 225', label: 'vs Carriers’ 139' },
-            { num: '$0', label: 'Shrinkage' },
+            { num: '50–149 lb', label: 'Parcel Sweet Spot' },
+            { num: '3', label: 'US Warehouses — NJ / TX / CA' },
+            { num: 'Zone ≤ 4', label: 'Zone-Skip Injection' },
           ].map((s) => (
             <div key={s.num} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <span style={{ color: '#FFE600', fontSize: 36, fontWeight: 900 }}>{s.num}</span>

@@ -5,27 +5,35 @@ import { useState, useCallback } from 'react';
 type SkuRow = { sku: string; label: string; length: number; width: number; height: number; weight: number; qty: number };
 type DestRow = { zip: string; pct: number };
 
+// Dollar fields are OPTIONAL on purpose: /api/allocation strips every
+// currency field for unauthenticated callers (lib/redact.ts, Jay decision 7,
+// 2026-07-22). Only a dashboard session ever sees them. This page renders none
+// of them — the types keep them optional so nobody re-adds a render path and
+// gets a silently-undefined dollar amount past the compiler.
 type WhSkus = {
   sku: string; label: string; warehouse: string;
   units: number; pallets: number; units_per_pallet: number;
-  inbound_distance_miles: number; inbound_cost_total: number;
-  outbound_savings_per_pkg: number;
-  outbound_monthly_savings: number; outbound_annual_savings: number;
+  inbound_distance_miles: number;
+  inbound_cost_total?: number;
+  outbound_cost_per_pkg?: number;
+  outbound_savings_per_pkg?: number;
+  outbound_monthly_savings?: number; outbound_annual_savings?: number;
 };
 
 type WhSummary = {
   warehouse: string; warehouse_zip: string;
   total_units: number; total_pallets: number;
-  inbound_distance_miles: number; inbound_ltl_cost: number;
-  weighted_savings_per_pkg: number;
+  inbound_distance_miles: number;
+  inbound_ltl_cost?: number;
+  weighted_savings_per_pkg?: number;
   skus: WhSkus[];
 };
 
 type Result = {
   origin_zip: string; label: string | null;
   total_units: number; total_pallets: number;
-  total_inbound_ltl_cost: number;
-  total_monthly_savings: number; total_annual_savings: number;
+  total_inbound_ltl_cost?: number;
+  total_monthly_savings?: number; total_annual_savings?: number;
   warehouses: WhSummary[];
   errors: string[];
 };
@@ -187,13 +195,20 @@ export default function AllocationPage() {
               <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', color: '#3a4454' }}>Pallets</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 900 }}>{result.total_pallets}</div>
             </div>
+            {/* Inbound LTL dollar tile removed 2026-07-22 (Jay, decision 7): derived
+                from LTL_COST_PER_MILE, an internal placeholder coefficient. Replaced
+                with the physical fact it was standing in for. Value still returned by
+                the API for internal use. */}
             <div>
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', color: '#3a4454' }}>Inbound LTL /mo</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 900 }}>${result.total_inbound_ltl_cost.toLocaleString()}</div>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', color: '#3a4454' }}>Total Inbound Miles</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 900 }}>{fmtNum(result.warehouses.reduce((a, w) => a + w.inbound_distance_miles, 0))}</div>
             </div>
+            {/* Savings tile removed 2026-07-22 (Jay): derived from
+                ZONE_RATE_MULTIPLIER, a placeholder coefficient. Not shown to
+                customers. The value is still returned by the API for internal use. */}
             <div>
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', color: '#059669' }}>Annual Savings</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#059669' }}>${result.total_annual_savings >= 1000 ? `${(result.total_annual_savings / 1000).toFixed(1)}K` : result.total_annual_savings}</div>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.55rem', textTransform: 'uppercase', color: '#3a4454' }}>Warehouses Used</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 900 }}>{result.warehouses.length}</div>
             </div>
           </div>
 
@@ -205,8 +220,10 @@ export default function AllocationPage() {
               </div>
               <div style={{ padding: '0.8rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', fontSize: '0.85rem', borderBottom: '1px solid #e5e7eb' }}>
                 <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Inbound dist</span><br />{wh.inbound_distance_miles.toLocaleString()} mi</div>
-                <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Inbound LTL /mo</span><br />${wh.inbound_ltl_cost.toLocaleString()}</div>
-                <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Avg savings/pkg</span><br />${wh.weighted_savings_per_pkg.toFixed(2)}</div>
+                {/* Per-warehouse inbound LTL dollars removed 2026-07-22 (Jay, decision 7):
+                    LTL_COST_PER_MILE-derived. */}
+                <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>SKUs</span><br />{wh.skus.length}</div>
+                <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Units</span><br />{wh.total_units.toLocaleString()}</div>
                 <div><span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Pallets</span><br /><strong>{wh.total_pallets}</strong></div>
               </div>
               {/* SKU table */}
@@ -217,8 +234,7 @@ export default function AllocationPage() {
                       <th style={{ textAlign: 'left', padding: '0.3rem' }}>SKU</th>
                       <th style={{ textAlign: 'right', padding: '0.3rem' }}>Units</th>
                       <th style={{ textAlign: 'right', padding: '0.3rem' }}>Pallets</th>
-                      <th style={{ textAlign: 'right', padding: '0.3rem' }}>$/pkg saved</th>
-                      <th style={{ textAlign: 'right', padding: '0.3rem' }}>Annual savings</th>
+                      <th style={{ textAlign: 'right', padding: '0.3rem' }}>Units / pallet</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -227,8 +243,7 @@ export default function AllocationPage() {
                         <td style={{ padding: '0.3rem', fontWeight: 600 }}>{s.label} <span style={{ color: '#6b7280' }}>({s.sku})</span></td>
                         <td style={{ textAlign: 'right', padding: '0.3rem' }}>{s.units.toLocaleString()}</td>
                         <td style={{ textAlign: 'right', padding: '0.3rem' }}>{s.pallets}</td>
-                        <td style={{ textAlign: 'right', padding: '0.3rem', color: '#059669' }}>${s.outbound_savings_per_pkg.toFixed(2)}</td>
-                        <td style={{ textAlign: 'right', padding: '0.3rem', color: '#059669' }}>${s.outbound_annual_savings >= 1000 ? `${(s.outbound_annual_savings / 1000).toFixed(1)}K` : s.outbound_annual_savings.toFixed(0)}</td>
+                        <td style={{ textAlign: 'right', padding: '0.3rem' }}>{s.units_per_pallet}</td>
                       </tr>
                     ))}
                   </tbody>

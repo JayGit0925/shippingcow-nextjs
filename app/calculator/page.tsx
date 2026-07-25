@@ -4,12 +4,13 @@ import DimCalculator from '@/components/DimCalculator';
 import FinalCTA from '@/components/FinalCTA';
 
 export const metadata: Metadata = {
-  title: 'DIM Weight Calculator — See How DIM 225 Saves You Money | ShippingCow',
+  title: 'DIM Weight Calculator — What Your Carrier Is Really Billing You For | ShippingCow',
   description:
-    'Calculate your real shipping costs under UPS/FedEx DIM 139, typical 3PL DIM 166, and ShippingCow DIM 225. See exactly how much you\'re overpaying per package — and per year.',
+    'Enter your box dimensions and actual weight. See the billable weight your carrier charges at the published DIM divisors — UPS/FedEx 139 and the typical 3PL 166 — on 50–149 lb parcels.',
+  alternates: { canonical: '/calculator' },
   openGraph: {
     title: 'DIM Weight Calculator — ShippingCow',
-    description: 'Stop paying for air. See your real DIM weight savings with divisor 225.',
+    description: 'Stop paying for air. See the billable weight your carrier is actually charging you for.',
     type: 'website',
   },
 };
@@ -24,9 +25,8 @@ export default function CalculatorPage() {
               Stop Paying for <span>Air.</span>
             </h1>
             <p>
-              Every carrier uses a "DIM divisor" to calculate dimensional weight. UPS and FedEx use 139. Most 3PLs use 166.
-              ShippingCow uses <strong>225</strong> — the highest in the industry — which means your billable weight is 38–39% lower.
-              Enter your package dimensions below and see the difference in real dollars.
+              Every carrier uses a &ldquo;DIM divisor&rdquo; to turn your box size into billable weight. UPS and FedEx publish 139. Most 3PLs use 166.
+              Enter your package below and see the billable weight you are being charged for today — then let us audit the invoice.
             </p>
           </div>
 
@@ -56,8 +56,8 @@ export default function CalculatorPage() {
               },
               {
                 step: '03',
-                title: 'ShippingCow uses 225 — the industry max',
-                body: 'A higher divisor = lower DIM weight = lower billable weight = you pay less. Our DIM 225 is 62% higher than the UPS/FedEx standard of 139.',
+                title: 'Heavy, dense parcels get punished',
+                body: 'DIM divisors were built to penalise light, oversized boxes. Applied to a dense 50–149 lb product they inflate your bill on a package that is already paying its own way. That gap is what our free audit quantifies on your real invoice.',
               },
             ].map(({ step, title, body }) => (
               <div key={step} style={{ background: 'var(--white)', border: '4px solid var(--dark)', padding: '1.8rem', boxShadow: 'var(--shadow-pixel)' }}>
@@ -71,9 +71,8 @@ export default function CalculatorPage() {
           <div style={{ marginTop: '2rem', background: 'var(--blue)', color: '#fff', padding: '1.5rem 2rem', border: '4px solid var(--dark)', boxShadow: 'var(--shadow-pixel-lg)' }}>
             <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600 }}>
               <strong>Example:</strong> A 30×24×20 box that weighs 45 lbs.{' '}
-              UPS/FedEx DIM: <strong>103.6 lbs billable</strong>.{' '}
-              ShippingCow DIM: <strong>64 lbs billable</strong> — 39.6 lbs you stop paying for.{' '}
-              The bulkier the box relative to its weight, the bigger the DIM win. Dense heavy parcels save through our net rates, fuel program, and zone-skipping instead — run yours above.
+              At the published UPS/FedEx divisor of 139 it bills as <strong>103.6 lbs</strong> — more than double what it weighs.{' '}
+              That is the number on your invoice today. Run your own box above, then send us the invoice and we&apos;ll tell you what it should cost.
             </p>
           </div>
         </div>

@@ -1,3 +1,11 @@
+// ⚠️ DO NOT MOUNT — QUARANTINED 2026-07-22 (Jay's ruling).
+// This component's entire premise is the "zero shrinkage / we pay" claim, which
+// is banned from every user-facing surface. It is not currently rendered
+// anywhere. It cannot be fixed by editing a string; it needs to be deleted or
+// rebuilt around a claim we can stand behind. Owner: shippingcow-pm + Jay.
+// It also renders published last-mile rate figures from data/location1-rates.ts,
+// which are likewise banned on public pages.
+
 'use client';
 
 import { useMemo, useState } from 'react';

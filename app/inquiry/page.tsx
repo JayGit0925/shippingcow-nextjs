@@ -22,6 +22,20 @@ function calcSavings(skus: Sku[]) {
   return totalSavingsPerPkg;
 }
 
+// Pounds the seller is billed for above actual weight, at the carrier's PUBLISHED
+// divisor (139). This is the only DIM figure shown to the user — no ShippingCow
+// divisor, no ShippingCow rate, no savings % on public surfaces (Jay, 2026-07-22).
+function calcPhantomLbs(skus: Sku[]) {
+  let phantom = 0;
+  for (const s of skus) {
+    if (!s.length || !s.width || !s.height || !s.weight) continue;
+    const vol = s.length * s.width * s.height;
+    const bill139 = Math.max(s.weight, vol / DIM_DIVISOR_STANDARD);
+    phantom += Math.max(bill139 - s.weight, 0);
+  }
+  return phantom;
+}
+
 type Sku = {
   name: string; length: number; width: number; height: number; weight: number;
 };
@@ -68,7 +82,7 @@ function InquiryInner() {
   const [busy, setBusy]     = useState(false);
   const [err, setErr]       = useState<string | null>(null);
   const [done, setDone]     = useState(false);
-  const [auditSummary, setAuditSummary] = useState<{annual_savings: number, warehouse_distribution?: Record<string, number>} | null>(null);
+  const [auditSummary, setAuditSummary] = useState<{warehouse_distribution?: Record<string, number>} | null>(null);
 
   // Step 1
   const [spend,    setSpend]    = useState('');
@@ -105,8 +119,11 @@ function InquiryInner() {
         .then((r) => r.json())
         .then((data) => {
           if (data.report_data) {
+            // No savings figure read here: /api/audit strips every dollar for
+            // unauthenticated callers (Jay decision 7, 2026-07-22), and this
+            // banner has rendered no number since f80bf2f. Reading
+            // report_data.total_savings would only produce NaN in state.
             setAuditSummary({
-              annual_savings: data.report_data.total_savings * 12,
               warehouse_distribution: data.report_data.warehouse_distribution,
             });
           }
@@ -116,9 +133,11 @@ function InquiryInner() {
   }, [searchParams]);
 
   // Live savings preview (step 3)
-  const [savingsPerPkg, setSavingsPerPkg] = useState(0);
+  const [savingsPerPkg, setSavingsPerPkg] = useState(0); // internal only — sent with the lead, never rendered
+  const [phantomLbs, setPhantomLbs] = useState(0);
   useEffect(() => {
     setSavingsPerPkg(calcSavings(skus));
+    setPhantomLbs(calcPhantomLbs(skus));
   }, [skus]);
 
   function updateSku(i: number, field: keyof Sku, value: string | number) {
@@ -217,14 +236,15 @@ function InquiryInner() {
           <p style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#3a4454' }}>
             Your custom savings report is being prepared. Expect it within <strong>1 business day</strong>.
           </p>
-          {savingsPerPkg > 0 && (
+          {phantomLbs > 0 && (
             <div style={{ background: 'var(--yellow)', border: '4px solid var(--dark)', padding: '1.2rem', margin: '1.5rem 0', boxShadow: 'var(--shadow-pixel)' }}>
-              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.65rem', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Your estimated savings</div>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.65rem', textTransform: 'uppercase', marginBottom: '0.4rem' }}>What we already spotted</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 900 }}>
-                ${Math.round(monthlySavings).toLocaleString()}/mo
+                {phantomLbs.toFixed(1)} lbs
               </div>
               <div style={{ fontSize: '0.85rem', color: '#3a4454' }}>
-                ${Math.round(savingsPerPkg * 100) / 100} per package with DIM 225
+                billed above actual weight across the SKUs you entered, at your carrier&apos;s published DIM 139 divisor.
+                We&apos;ll price the rest in your report.
               </div>
             </div>
           )}
@@ -246,8 +266,10 @@ function InquiryInner() {
           <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.7rem', color: 'var(--blue)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
             Based on your audit
           </div>
+          {/* Savings dollar figure removed 2026-07-22 (Jay): derived from
+              ZONE_RATE_MULTIPLIER / ESTIMATED_COST_PER_LB placeholders. */}
           <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>
-            You could save <span style={{ color: 'var(--blue)' }}>${(auditSummary.annual_savings).toLocaleString('en-US', {minimumFractionDigits: 0})}/year</span>
+            We&apos;ve read your shipments — we can see exactly what you&apos;re being billed for.
           </div>
           <div style={{ fontSize: '0.95rem', color: '#3a4454', marginTop: '0.5rem' }}>
             Complete your profile below and we'll send you a detailed breakdown within 1 business day.
@@ -362,23 +384,23 @@ function InquiryInner() {
             )}
 
             {/* Live savings preview */}
-            {savingsPerPkg > 0 && (
+            {phantomLbs > 0 && (
               <div style={{ background: '#1A202C', border: '4px solid var(--dark)', padding: '1.2rem', marginBottom: '1.2rem', boxShadow: 'var(--shadow-pixel)' }}>
                 <div style={{ fontFamily: 'var(--font-pixel)', fontSize: '0.6rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '0.6rem' }}>
-                  Your DIM 225 Savings Preview
+                  What You&apos;re Billed For Today
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div>
-                    <div style={{ color: '#059669', fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 900 }}>
-                      ${Math.round(savingsPerPkg * 100) / 100}
+                    <div style={{ color: 'var(--yellow)', fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 900 }}>
+                      {phantomLbs.toFixed(1)} lbs
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.78rem' }}>saved per package</div>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.78rem' }}>phantom weight per order, at DIM 139</div>
                   </div>
                   <div>
                     <div style={{ color: 'var(--yellow)', fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 900 }}>
-                      ${Math.round(savingsPerPkg * Number(ordVol || 100)).toLocaleString()}
+                      {Math.round(phantomLbs * Number(ordVol || 100)).toLocaleString()} lbs
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.78rem' }}>estimated monthly savings</div>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.78rem' }}>phantom weight per month</div>
                   </div>
                 </div>
               </div>
