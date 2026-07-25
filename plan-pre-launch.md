@@ -1,3 +1,7 @@
+> **SUPERSEDED 2026-07-25.** Do not execute from this file. Launch phases P0–P5 shipped; the calculator cost-engine upgrade (T03) lives on as TSK-WEB-06 (gated on the DIM divisor decision), and portal work (T01/T02/T04 area) is fenced as Phase 2 in the website PRD:
+> https://github.com/JayGit0925/logistar/blob/main/shippingcow/website/prd_website_shippingcow_2026-07-25.md
+> Kept for historical reference.
+
 # 🐄 ShippingCow — Pre-Launch Plan
 
 | **Branch:** `jay-review` · **Build:** 60 pages, clean

@@ -1,3 +1,6 @@
+> **SUPERSEDED 2026-07-25.** Do not execute from this file. Widget items (A1–A16) were absorbed into the website PRD as the widget re-audit + fix tasks (TSK-WEB-04/05) — several were already fixed post-audit, so re-verify before touching. Social items (B1–B12) are out of website scope and were routed out of this repo entirely. PRD:
+> https://github.com/JayGit0925/logistar/blob/main/shippingcow/website/prd_website_shippingcow_2026-07-25.md
+
 # 🐄 ShippingCow — Proactive Work Plan
 
 > Auto-generated: 2026-04-25 · From 3 parallel audits (widget, social media, competitors)
