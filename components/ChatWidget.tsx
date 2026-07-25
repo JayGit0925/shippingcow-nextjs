@@ -153,13 +153,17 @@ export default function ChatWidget() {
     setSessionId(sid);
     const ctx = getCalculatorContext();
     setCalcContext(ctx);
-    setIsMobile(window.innerWidth < 768);
+
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener('resize', onResize);
 
     const stored = loadMessages();
     if (stored.length > 0) {
       setMessages(stored);
     }
     // Opener is set below via the pathname effect
+    return () => window.removeEventListener('resize', onResize);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Recompute opener when pathname changes — but only if no message history exists
@@ -542,7 +546,7 @@ export default function ChatWidget() {
                       onClick={() => { setSkipMsgCount(userMsgCount); setCaptureMode(false); }}
                       style={{ background: 'transparent', color: '#6B7280', border: '1px solid #D1D5DB', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem' }}
                     >
-                      Skip
+                      Not now
                     </button>
                   </div>
                 </form>
