@@ -4,6 +4,10 @@
 //   BASE_URL=https://preview.example npm run perf:floor  # audits a live URL
 // CHROME_PATH is passed to lighthouse; defaults to the preinstalled Chromium
 // when unset. Lighthouse's default emulation is mobile — no preset needed.
+// LH_BLOCK_URLS (comma-separated URL patterns) excludes requests the local
+// sandbox stalls — e.g. fonts.googleapis.com hangs ~12s behind the agent
+// proxy and zeroes Speed Index. Production QA runs WITHOUT it: blocking
+// real third parties would game the metric.
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { MONEY_PAGES, PERF_FLOOR, evaluateFloor } from './lighthouse-floor-lib.mjs';
@@ -32,6 +36,11 @@ async function waitForServer(url, tries = 60) {
   throw new Error(`Server at ${url} did not become ready`);
 }
 
+const blockedPatterns = (process.env.LH_BLOCK_URLS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 function auditPage(page) {
   const out = execFileSync(
     'npx',
@@ -43,6 +52,7 @@ function auditPage(page) {
       '--output-path=stdout',
       '--quiet',
       '--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage',
+      ...blockedPatterns.map((p) => `--blocked-url-patterns=${p}`),
     ],
     {
       env: { ...process.env, CHROME_PATH: chromePath },
@@ -56,7 +66,8 @@ function auditPage(page) {
 
 let server;
 if (!externalBase) {
-  server = spawn('npx', ['next', 'start'], { stdio: 'ignore' });
+  // detached => own process group, so the grandchild `next` server dies too.
+  server = spawn('npx', ['next', 'start'], { stdio: 'ignore', detached: true });
 }
 
 try {
@@ -85,5 +96,11 @@ try {
   }
   console.log(`\nPerf floor PASSED: all ${results.length} money pages >= ${PERF_FLOOR}`);
 } finally {
-  if (server) server.kill('SIGTERM');
+  if (server) {
+    try {
+      process.kill(-server.pid, 'SIGTERM');
+    } catch {
+      server.kill('SIGTERM');
+    }
+  }
 }

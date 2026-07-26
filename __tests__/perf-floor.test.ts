@@ -70,4 +70,16 @@ describe('runner wiring (static)', () => {
   it('is wired as npm run perf:floor', () => {
     expect(pkg().scripts['perf:floor']).toBe('node scripts/lighthouse-floor.mjs');
   });
+
+  it('kills the whole server process group, not just the npx wrapper', () => {
+    // spawn('npx', ['next','start']) leaves a grandchild `next` holding :3000
+    // unless the runner detaches and signals the negative pid (process group).
+    expect(runner()).toMatch(/detached:\s*true/);
+    expect(runner()).toMatch(/process\.kill\(-server\.pid/);
+  });
+
+  it('supports LH_BLOCK_URLS for sandboxes that stall external requests', () => {
+    expect(runner()).toContain('LH_BLOCK_URLS');
+    expect(runner()).toContain('--blocked-url-patterns');
+  });
 });
