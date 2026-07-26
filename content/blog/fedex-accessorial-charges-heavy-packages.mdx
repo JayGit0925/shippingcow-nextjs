@@ -1,0 +1,57 @@
+---
+title: "AHS, Oversize, Remote: Every FedEx Accessorial That Hits Heavy Packages"
+date: "2026-07-26"
+category: "Logistics Operations"
+excerpt: "Ship anything over 50 lb and your base rate is just the opening bid. Additional Handling, Oversize, residential and remote-area surcharges stack on top — then fuel is charged on the whole pile. Here's every trigger, the exact thresholds, and how to dodge the ones you're paying by accident."
+readingTime: "6 min"
+author: "ShippingCow Team"
+---
+
+If your product weighs more than 50 pounds or ships in a big box, the base rate on the FedEx rate card is just the opening bid. The real bill is built from **accessorial surcharges** — automatic add-ons triggered by your package's weight, dimensions, and destination. The big ones for heavy goods: **Additional Handling** (triggered above 50 lb actual weight, or by a long dimension), **Oversize** (triggered above 96 inches on the longest side, or 130 inches length-plus-girth), **residential delivery**, and **delivery area / remote surcharges**. Then the fuel surcharge is applied as a percentage of *all of it*. One 60 lb package can trip three or four of these at once — which is how a "reasonable" base rate turns into an invoice line twice that size.
+
+Here's each trigger, and which ones you can actually engineer away.
+
+## Additional Handling (AHS): the 50-pound tripwire
+
+Additional Handling is the accessorial heavy shippers hit most. It triggers on **any package over 50 lb actual weight** — no exceptions, no rounding in your favor. There's a dimensional version too: packages with a long side over roughly four feet get flagged for special handling even when they're light.
+
+Two things make AHS painful:
+
+- **It's binary.** A 51 lb package pays the full surcharge; a 49 lb package pays nothing. If your product sits near the line, packaging weight alone can be the difference.
+- **It's fuel-bearing.** The fuel surcharge percentage is applied on top of AHS, so the sticker price understates the real cost.
+
+This 50 lb line is an industry-wide wall, not just a carrier quirk: mainstream fulfillment networks draw the same boundary. ShipBob, for example, treats items over 50 lb — or with any dimension over 48 inches — as outside standard fulfillment entirely.
+
+## Oversize: the 96-inch / 130-inch wall
+
+Oversize (sometimes called "Oversize charge" or handled as a package-size cap) triggers when a package exceeds **96 inches on its longest side** or **130 inches in length plus girth** (girth = 2×width + 2×height). Furniture, treadmills, kayaks, and appliance-adjacent products live near this wall.
+
+Oversize is the most expensive tier of the stack, and 2026 has made the squeeze industry-wide. Amazon's new **Overmax Handling Fee, effective January 15, 2026**, adds **$17–$25 per unit** on Extra-Large items past those same 96"/130" thresholds — on top of standard FBA fees. When even the biggest fulfillment network in the world adds a dedicated fee for these packages, it tells you exactly how the economics work: past these dimensions, everyone pays a premium somewhere. The question is only how big it is and who manages it for you.
+
+## Residential and remote: the destination stack
+
+Two more lines trigger off the delivery address rather than the box:
+
+- **Residential surcharge** — applies to nearly every direct-to-consumer order, since your customers live in houses, not loading docks.
+- **Delivery Area / Extended Delivery Area surcharges** — apply when the destination ZIP is outside dense metro coverage. Rural and exurban customers cost more to reach, and for heavy goods the remote-area version stings the most.
+
+You can't change where your customers live. But **which warehouse the package leaves from** decides the zone and how many surcharge-prone miles the last leg covers — this is where multi-node injection and [zone-skip routing](/blog/zone-skip-routing-how-it-works) earn their keep.
+
+## Fuel: the multiplier on the whole pile
+
+Every surcharge above is fuel-bearing. FedEx's ground fuel surcharge — running **above 22% since December 2025** — is applied to base *plus* AHS *plus* oversize *plus* residential. And this pattern is spreading: even Amazon introduced a **3.5% fuel surcharge on fulfillment fees in April 2026**. Stack math is why two shippers with the same base discount can have wildly different effective rates: the one who avoids two accessorials also avoids the fuel riding on them. We walked through the fuel mechanism in detail in [our fuel surcharge breakdown](/blog/fedex-fuel-surcharge-2026).
+
+## The stack in one table
+
+| Trigger | Threshold | Can you engineer around it? |
+|---|---|---|
+| Additional Handling (weight) | > 50 lb actual | Sometimes — lighter packaging near the line |
+| Additional Handling (dimensions) | long side past ~4 ft | Sometimes — box redesign, disassembly |
+| Oversize | > 96" longest side or > 130" L+girth | Rarely — product is what it is |
+| Residential | home delivery address | No — but the last-leg carrier choice matters |
+| Delivery / remote area | destination ZIP | Partially — ship from closer nodes |
+| Fuel | % of everything above | Indirectly — every line you remove shrinks it |
+
+## Find out which ones you're actually paying
+
+Most heavy-goods sellers can name their base rate but not their accessorial ratio — and it's routinely a third or more of total spend. Run your dimensions and weight through our [shipping cost calculator](/calculator) to see which triggers your products trip, or send a recent carrier invoice for a [free shipping audit](/audit) and we'll break out every accessorial line, which ones were avoidable, and what routing would have dodged them.
