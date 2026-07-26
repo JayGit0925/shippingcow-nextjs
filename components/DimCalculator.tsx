@@ -7,6 +7,7 @@ import {
   DIM_DIVISOR_STANDARD,
   DIM_DIVISOR_3PL,
 } from '@/lib/constants';
+import { trackCalculatorStart, trackCalculatorComplete } from '@/lib/funnel';
 
 // PUBLIC SURFACE RULE (Jay, 2026-07-22):
 // This calculator shows the customer what THEIR CURRENT carrier is billing them
@@ -136,6 +137,15 @@ export default function DimCalculator() {
   const [zoneError, setZoneError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionIdRef = useRef<string | null>(null);
+  const startedRef = useRef(false);
+  const completedRef = useRef(false);
+
+  // Funnel: calculator_start fires once, on the first user edit of any input.
+  function markStarted(field: string) {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    trackCalculatorStart({ first_field: field });
+  }
 
   // Get or create anonymous session_id
   useEffect(() => {
@@ -168,11 +178,20 @@ export default function DimCalculator() {
 
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
+        // Funnel: complete = results recomputed after a real user edit. The
+        // mount-time run recalculates with defaults, so gate on startedRef.
+        if (startedRef.current && !completedRef.current) {
+          completedRef.current = true;
+          trackCalculatorComplete({
+            used_zone_check: originZip.length === 5 && destZip.length === 5,
+            monthly_volume: volume,
+          });
+        }
         saveToDb(length, width, height, weight, volume);
       }, 800);
     }
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [length, width, height, weight, volume, saveToDb]);
+  }, [length, width, height, weight, volume, originZip, destZip, saveToDb]);
 
   // Fetch zone-based real estimate when ZIPs are valid
   const zoneDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -243,16 +262,16 @@ export default function DimCalculator() {
           </h3>
 
           {([
-            { label: 'Length (inches)', value: length, set: setLength },
-            { label: 'Width (inches)',  value: width,  set: setWidth  },
-            { label: 'Height (inches)', value: height, set: setHeight },
-          ] as const).map(({ label, value, set }) => (
+            { label: 'Length (inches)', field: 'length', value: length, set: setLength },
+            { label: 'Width (inches)',  field: 'width',  value: width,  set: setWidth  },
+            { label: 'Height (inches)', field: 'height', value: height, set: setHeight },
+          ] as const).map(({ label, field, value, set }) => (
             <div key={label} className="dim-calculator__field">
               <label className="dim-calculator__label">{label}</label>
               <input
                 type="number" min={1} max={120} step={0.5}
                 value={value}
-                onChange={(e) => set(Number(e.target.value))}
+                onChange={(e) => { markStarted(field); set(Number(e.target.value)); }}
                 className="dim-calculator__input"
               />
             </div>
@@ -263,7 +282,7 @@ export default function DimCalculator() {
             <input
               type="number" min={1} max={500} step={0.5}
               value={weight}
-              onChange={(e) => setWeight(Number(e.target.value))}
+              onChange={(e) => { markStarted('weight'); setWeight(Number(e.target.value)); }}
               className="dim-calculator__input"
             />
           </div>
@@ -273,7 +292,7 @@ export default function DimCalculator() {
             <input
               type="number" min={1} max={100000} step={1}
               value={volume}
-              onChange={(e) => setVolume(Number(e.target.value))}
+              onChange={(e) => { markStarted('volume'); setVolume(Number(e.target.value)); }}
               className="dim-calculator__input"
             />
           </div>
@@ -289,7 +308,7 @@ export default function DimCalculator() {
                 <input
                   type="text" maxLength={5} inputMode="numeric"
                   value={originZip}
-                  onChange={(e) => setOriginZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                  onChange={(e) => { markStarted('origin_zip'); setOriginZip(e.target.value.replace(/\D/g, '').slice(0, 5)); }}
                   className="dim-calculator__input"
                   placeholder="Your warehouse ZIP"
                 />
@@ -299,7 +318,7 @@ export default function DimCalculator() {
                 <input
                   type="text" maxLength={5} inputMode="numeric"
                   value={destZip}
-                  onChange={(e) => setDestZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                  onChange={(e) => { markStarted('dest_zip'); setDestZip(e.target.value.replace(/\D/g, '').slice(0, 5)); }}
                   className="dim-calculator__input"
                   placeholder="Customer ZIP"
                 />
