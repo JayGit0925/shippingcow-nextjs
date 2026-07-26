@@ -227,7 +227,6 @@ function InquiryInner() {
 
   // ---- Confirmation screen ----
   if (done) {
-    const monthlySavings = savingsPerPkg * Number(ordVol || 100);
     return (
       <div className="form-page">
         <div className="form-card form-card--wide" style={{ textAlign: 'center' }}>

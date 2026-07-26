@@ -5,12 +5,17 @@
 // ============================================================
 
 // DIM Weight Divisors
-export const DIM_DIVISOR_STANDARD = 139     // UPS / FedEx published rate
-export const DIM_DIVISOR_3PL      = 166     // Typical 3PL
-export const DIM_DIVISOR_SHIPPINGCOW = 225  // ShippingCow advantage
+// The 139/166 values are public carrier/3PL knowledge and safe to render.
+// The internal contract divisor is GATE-DIM: it must never be rendered,
+// quoted, or implied on any public surface (see lib/redact.ts).
+export const DIM_DIVISOR_STANDARD = 139     // carrier-published (UPS/FedEx ground)
+export const DIM_DIVISOR_3PL      = 166     // typical 3PL published divisor
+export const DIM_DIVISOR_SHIPPINGCOW = 225  // internal contract divisor — GATE-DIM
 
 // Shipping cost estimate — $/lb billable weight
-// TODO: update with real blended rate data from carrier contracts
+// PLACEHOLDER — never render as a real number (PRD E-1, GATE-DIM).
+// Not a real blended rate; used only for internal lead-scoring context.
+// Replace with an engine-backed value once GATE-DIM clears.
 export const ESTIMATED_COST_PER_LB = 0.45
 
 // ============ Pricing Tiers ============
@@ -165,9 +170,11 @@ Key rules:
 - If they want a quote or seem ready -> point to /audit`
 
 // ============ Zone Rate Multipliers ============
-// Published carrier (FedEx/UPS) rates increase significantly by zone.
-// These multipliers represent the zone premium customers pay with standard carriers
-// relative to ShippingCow's flat contracted rates (which already reflect zone-skip routing).
+// PLACEHOLDER — never render as a real number (PRD E-1, GATE-DIM).
+// Illustrative zone-premium coefficients, not a measured carrier table.
+// Consumed only by lib/cost.ts internals; every derived dollar figure is
+// stripped for anonymous callers by lib/redact.ts. Replace with
+// engine-backed values once GATE-DIM clears.
 export const ZONE_RATE_MULTIPLIER: Record<number, number> = {
   2: 1.00,
   3: 1.20,
