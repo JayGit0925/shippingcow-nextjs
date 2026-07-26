@@ -8,6 +8,7 @@ import {
   DIM_DIVISOR_3PL,
 } from '@/lib/constants';
 import { CALC_PRESETS } from '@/lib/calculator-presets';
+import { buildInquiryHref, buildCalcContext } from '@/lib/calculator-handoff';
 
 // PUBLIC SURFACE RULE (Jay, 2026-07-22):
 // This calculator shows the customer what THEIR CURRENT carrier is billing them
@@ -217,6 +218,22 @@ export default function DimCalculator() {
     return () => { if (zoneDebounceRef.current) clearTimeout(zoneDebounceRef.current); };
   }, [length, width, height, weight, volume, originZip, destZip]);
 
+  // Persist a dollar-free snapshot for the chat widget's post-calc opener
+  // (ChatWidget.getCalculatorContext reads localStorage.sc_calc_result).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!(length > 0 && width > 0 && height > 0 && weight > 0 && volume > 0)) return;
+    try {
+      localStorage.setItem(
+        'sc_calc_result',
+        JSON.stringify(buildCalcContext(
+          { length, width, height, weight, volume, originZip, destZip },
+          zoneResults,
+        )),
+      );
+    } catch { /* storage full/blocked — non-fatal */ }
+  }, [length, width, height, weight, volume, originZip, destZip, zoneResults]);
+
   function handleCopyLink() {
     const url = new URL(window.location.href);
     url.searchParams.set('l',      String(length));
@@ -231,7 +248,10 @@ export default function DimCalculator() {
   }
 
   const maxDim = Math.max(results.dim139, results.dim166, weight, 1);
-  const inquiryHref = `/inquiry?l=${length}&w=${width}&h=${height}&weight=${weight}`;
+  const inquiryHref = buildInquiryHref({
+    length, width, height, weight, volume,
+    originZip, destZip,
+  });
 
   return (
     <div className="dim-calculator">

@@ -92,7 +92,7 @@ function InquiryInner() {
   // Step 2
   const [company,  setCompany]  = useState('');
   const [shopify,  setShopify]  = useState('');
-  const [ordVol,   setOrdVol]   = useState('');
+  const [ordVol,   setOrdVol]   = useState(() => searchParams.get('vol') || '');
   const [current3pl, setCurrent3pl] = useState('');
 
   // Step 3 — pre-fill first SKU from /calculator params
@@ -103,8 +103,8 @@ function InquiryInner() {
     height: Number(searchParams.get('h'))      || 0,
     weight: Number(searchParams.get('weight')) || 0,
   }]);
-  const [originZip, setOriginZip]   = useState('');
-  const [destZips,  setDestZips]    = useState('');
+  const [originZip, setOriginZip]   = useState(() => searchParams.get('origin_zip') || '');
+  const [destZips,  setDestZips]    = useState(() => searchParams.get('dest_zip') || '');
 
   // Step 4
   const [email,       setEmail]       = useState('');
