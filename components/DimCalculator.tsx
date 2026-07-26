@@ -7,6 +7,7 @@ import {
   DIM_DIVISOR_STANDARD,
   DIM_DIVISOR_3PL,
 } from '@/lib/constants';
+import { CALC_PRESETS } from '@/lib/calculator-presets';
 
 // PUBLIC SURFACE RULE (Jay, 2026-07-22):
 // This calculator shows the customer what THEIR CURRENT carrier is billing them
@@ -241,6 +242,30 @@ export default function DimCalculator() {
           <h3 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', marginBottom: '1.5rem', fontSize: '1.1rem' }}>
             Your Package Dimensions
           </h3>
+
+          {/* ---- Bulky-item presets (TSK-WEB-06) ---- */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1.2rem' }}>
+            {CALC_PRESETS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  setLength(p.length);
+                  setWidth(p.width);
+                  setHeight(p.height);
+                  setWeight(p.weight);
+                }}
+                style={{
+                  fontFamily: 'var(--font-pixel)', fontSize: '0.6rem', textTransform: 'uppercase',
+                  padding: '0.4rem 0.6rem', cursor: 'pointer',
+                  background: 'var(--white)', border: '2px solid var(--dark)',
+                  boxShadow: '2px 2px 0 var(--dark)', letterSpacing: '0.03em',
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
 
           {([
             { label: 'Length (inches)', value: length, set: setLength },
