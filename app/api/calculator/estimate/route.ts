@@ -8,6 +8,7 @@ import {
   ESTIMATED_COST_PER_LB,
 } from '@/lib/constants';
 import { hasDashboardSession, redactEstimate } from '@/lib/redact';
+import { isRateLimited } from '@/lib/rate-limit';
 
 const schema = z.object({
   length: z.number().positive().max(120),
@@ -21,6 +22,16 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   try {
+    // 60/hr per IP: a human tweaking dims behind the 600ms client debounce
+    // stays far under this; scripted scraping of the zone engine does not.
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (isRateLimited(`calc-estimate:${ip}`, 60, 3600)) {
+      return NextResponse.json(
+        { error: 'Too many requests — try again in a bit.' },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const parsed = schema.safeParse(body);
     if (!parsed.success) {

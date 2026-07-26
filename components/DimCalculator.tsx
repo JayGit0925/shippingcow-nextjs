@@ -7,6 +7,8 @@ import {
   DIM_DIVISOR_STANDARD,
   DIM_DIVISOR_3PL,
 } from '@/lib/constants';
+import { CALC_PRESETS } from '@/lib/calculator-presets';
+import { buildInquiryHref, buildCalcContext } from '@/lib/calculator-handoff';
 
 // PUBLIC SURFACE RULE (Jay, 2026-07-22):
 // This calculator shows the customer what THEIR CURRENT carrier is billing them
@@ -216,6 +218,22 @@ export default function DimCalculator() {
     return () => { if (zoneDebounceRef.current) clearTimeout(zoneDebounceRef.current); };
   }, [length, width, height, weight, volume, originZip, destZip]);
 
+  // Persist a dollar-free snapshot for the chat widget's post-calc opener
+  // (ChatWidget.getCalculatorContext reads localStorage.sc_calc_result).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!(length > 0 && width > 0 && height > 0 && weight > 0 && volume > 0)) return;
+    try {
+      localStorage.setItem(
+        'sc_calc_result',
+        JSON.stringify(buildCalcContext(
+          { length, width, height, weight, volume, originZip, destZip },
+          zoneResults,
+        )),
+      );
+    } catch { /* storage full/blocked — non-fatal */ }
+  }, [length, width, height, weight, volume, originZip, destZip, zoneResults]);
+
   function handleCopyLink() {
     const url = new URL(window.location.href);
     url.searchParams.set('l',      String(length));
@@ -230,7 +248,10 @@ export default function DimCalculator() {
   }
 
   const maxDim = Math.max(results.dim139, results.dim166, weight, 1);
-  const inquiryHref = `/inquiry?l=${length}&w=${width}&h=${height}&weight=${weight}`;
+  const inquiryHref = buildInquiryHref({
+    length, width, height, weight, volume,
+    originZip, destZip,
+  });
 
   return (
     <div className="dim-calculator">
@@ -241,6 +262,30 @@ export default function DimCalculator() {
           <h3 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', marginBottom: '1.5rem', fontSize: '1.1rem' }}>
             Your Package Dimensions
           </h3>
+
+          {/* ---- Bulky-item presets (TSK-WEB-06) ---- */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1.2rem' }}>
+            {CALC_PRESETS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  setLength(p.length);
+                  setWidth(p.width);
+                  setHeight(p.height);
+                  setWeight(p.weight);
+                }}
+                style={{
+                  fontFamily: 'var(--font-pixel)', fontSize: '0.6rem', textTransform: 'uppercase',
+                  padding: '0.4rem 0.6rem', cursor: 'pointer',
+                  background: 'var(--white)', border: '2px solid var(--dark)',
+                  boxShadow: '2px 2px 0 var(--dark)', letterSpacing: '0.03em',
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
 
           {([
             { label: 'Length (inches)', value: length, set: setLength },
