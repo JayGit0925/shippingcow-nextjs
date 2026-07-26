@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import * as Sentry from '@sentry/nextjs';
 import { analyzeShipment, type ShipmentAnalysis, getHandlingFee } from '@/lib/cost';
 import { saveAudit, getAudit } from '@/lib/db';
 import { hasDashboardSession, redactAuditReport, redactAuditRow } from '@/lib/redact';
@@ -100,6 +101,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(audit);
   } catch (err) {
+    Sentry.captureException(err);
     console.error('[audit get]', err);
     return NextResponse.json({ error: 'Failed to fetch audit' }, { status: 500 });
   }
@@ -277,6 +279,7 @@ export async function POST(req: Request) {
         total_savings: Math.round(total_savings * 100) / 100,
       });
     } catch (dbErr) {
+      Sentry.captureException(dbErr);
       console.error('[audit] DB save error:', dbErr);
       // Still return the report even if DB save fails
     }
@@ -288,6 +291,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(auditId ? { ...payload, id: auditId } : payload);
   } catch (err) {
+    Sentry.captureException(err);
     console.error('[audit]', err);
     return NextResponse.json(
       { error: 'Analysis failed. Please try again.' },

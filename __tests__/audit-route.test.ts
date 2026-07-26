@@ -54,10 +54,19 @@ const ROW = {
 };
 
 const getAudit = vi.fn();
-vi.mock('@/lib/db', () => ({ getAudit, saveAudit: vi.fn(async () => 'aaaa-bbbb') }));
+vi.mock('@/lib/db', () => ({
+  getAudit,
+  saveAudit: vi.fn(async () => 'aaaa-bbbb'),
+  // POST analysis reaches lib/zone → getZipCoords; null coords means the
+  // static zone chart drives the zone and distance falls back to 0.
+  getZipCoords: vi.fn(async () => null),
+}));
 
 const getCurrentUser = vi.fn();
 vi.mock('@/lib/auth', () => ({ getCurrentUser }));
+
+const captureException = vi.fn();
+vi.mock('@sentry/nextjs', () => ({ captureException }));
 
 async function get() {
   const { GET } = await import('@/app/api/audit/route');
@@ -142,5 +151,21 @@ describe('GET /api/audit — payload by session state', () => {
     expect(json.report_data.pct_within_zone_5).toBe(100);
     expect(json.report_data.shipment_details[0].current_billable_139).toBe(96.4);
     expect(json.report_data.shipment_details[0].units_per_pallet).toBe(8);
+  });
+
+  // A-1 hardening (TSK-WEB-09): a DB-save failure must reach Sentry, but the
+  // prospect still gets their report — the funnel never silently fails.
+  it('captures to Sentry when the DB save fails (report still returned)', async () => {
+    captureException.mockClear();
+    const db = await import('@/lib/db');
+    (db.saveAudit as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('db down'));
+    const { POST } = await import('@/app/api/audit/route');
+    const res = await POST(new Request('http://test/api/audit', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ shipments: [{ origin_zip: '08901', dest_zip: '90210', length: 30, width: 24, height: 20, weight: 85, quantity: 1 }] }),
+    }));
+    expect(res.status).toBe(200);
+    expect(captureException).toHaveBeenCalled();
   });
 });
