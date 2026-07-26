@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { ReportView } from './_components/ReportView';
+import { captureEvent } from '@/lib/analytics';
 import type { AuditReport } from '@/app/api/audit/route';
 
 type UploadState = { type: 'upload'; error?: string; preview?: { rows: any[]; count: number } };
@@ -105,14 +106,19 @@ export default function AuditPage() {
       return;
     }
     setState({type: 'processing', count: shipments.length});
+    // On failure, keep the parsed preview so retry is one click — the
+    // prospect must never have to re-upload their file (PRD A-1 retry UI).
+    const failBack = (error: string) =>
+      setState({type: 'upload', error, preview: {rows: shipments.slice(0, 5), count: shipments.length}});
     try {
       const res = await fetch('/api/audit', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({shipments})});
-      if (!res.ok) { const err = await res.json(); setState({type: 'upload', error: err.error || 'Analysis failed'}); return; }
+      if (!res.ok) { const err = await res.json(); failBack(err.error || 'Analysis failed'); return; }
       const report = await res.json();
+      captureEvent('audit_submitted', { shipment_count: shipments.length });
       setState({type: 'report', report, auditId: report.id});
       sessionStorage.removeItem('audit_shipments');
     } catch (err) {
-      setState({type: 'upload', error: err instanceof Error ? err.message : 'Error'});
+      failBack(err instanceof Error ? err.message : 'Error');
     }
   }
 

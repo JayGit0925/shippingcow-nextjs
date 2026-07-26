@@ -525,3 +525,9 @@ export async function getAudit(id: string): Promise<AuditReport | undefined> {
   `;
   return rows[0];
 }
+
+export async function linkAuditLead(auditId: string, leadId: string): Promise<void> {
+  await sql`
+    UPDATE audits SET lead_id = ${leadId} WHERE id = ${auditId}
+  `;
+}
