@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, FormEvent, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import type { Message } from '@/lib/types';
+import { trackEmailCaptured, trackQualified, QUALIFIED_SCORE_THRESHOLD } from '@/lib/funnel';
 
 // ─── Session storage ────────────────────────────────────────────────────────
 
@@ -249,6 +250,18 @@ export default function ChatWidget() {
     }).catch(() => {});
   }
 
+  // Funnel: qualified fires once per browser session, the first time the ICP
+  // scorer returns score >= QUALIFIED_SCORE_THRESHOLD. Mirrored to the
+  // internal chat-events pipe (its allowlist already includes 'qualified').
+  function markQualified(score: number, intent?: string) {
+    try {
+      if (sessionStorage.getItem('sc_qualified') === '1') return;
+      sessionStorage.setItem('sc_qualified', '1');
+    } catch {}
+    trackQualified({ score, intent });
+    fireEvent('qualified', { score });
+  }
+
   function handleOpen() {
     setOpen(true);
     fireEvent('widget_opened', { page_url: pathname });
@@ -319,6 +332,11 @@ export default function ChatWidget() {
       const updatedMessages = [...next, reply];
       setMessages(updatedMessages);
 
+      const score = data.qualify?.score;
+      if (typeof score === 'number' && score >= QUALIFIED_SCORE_THRESHOLD) {
+        markQualified(score, data.qualify?.intent);
+      }
+
       if (data.rate_limited) {
         setRateLimited(true);
         return;
@@ -368,6 +386,9 @@ export default function ChatWidget() {
       setCaptureMode(false);
       try { localStorage.setItem('sc_email_captured', '1'); } catch {}
       fireEvent('email_captured', { email: emailInput });
+      // PostHog gets the stage only — the address itself stays in the
+      // first-party Supabase pipe above.
+      trackEmailCaptured({ source: 'chat' });
 
       setMessages((prev) => [
         ...prev,
