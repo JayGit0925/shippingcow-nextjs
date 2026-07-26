@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   alternates: { canonical: '/big-and-bulky' },
 };
 
+// Visible freshness signal (PRD C-3): bump within 30 days of any
+// surcharge/rate event. Same convention as /heavy-3pl-comparison.
+const LAST_UPDATED = '2026-07-26';
+
 const PRODUCTS = [
   { icon: '🛋️', label: 'Furniture' },
   { icon: '🏋️', label: 'Gym Equipment' },
@@ -101,6 +105,10 @@ export default function BigAndBulkyPage() {
                 ★ Big &amp; Bulky Specialist · 50–149 lb Products
               </span>
 
+              <p style={{ color: '#64748B', fontSize: 14, marginBottom: 12 }}>
+                Last updated: {LAST_UPDATED}
+              </p>
+
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2rem,5vw,3.5rem)', lineHeight: 1.05, marginBottom: '1.2rem', textTransform: 'uppercase' }}>
                 Heavy Products Deserve a <span style={{ color: '#0052C9' }}>Heavy-Duty</span>{' '}
                 <span style={{ background: '#FEB81B', padding: '0 0.2em', display: 'inline-block' }}>3PL</span>
@@ -167,7 +175,7 @@ export default function BigAndBulkyPage() {
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <h2 style={{ fontFamily: 'var(--font-display)', textTransform: 'uppercase', fontSize: 'clamp(1.6rem,4vw,2.6rem)', marginBottom: '0.8rem' }}>
-              Why Heavy Sellers <span style={{ color: '#0052C9' }}>Switch</span> to Shipping Cow
+              Why Heavy Sellers <span style={{ color: '#0052C9' }}>Switch</span> to ShippingCow
             </h2>
             <p style={{ color: '#3a4454', maxWidth: 560, margin: '0 auto', fontSize: '1rem' }}>
               Every 3PL says they handle heavy freight. Most don't want it. We built the entire operation around it.
