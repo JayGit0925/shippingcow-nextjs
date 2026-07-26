@@ -23,6 +23,13 @@ describe.each(SLUGS)('app/%s/page.tsx', (slug) => {
   });
 });
 
+describe('internal links (PRD D-1)', () => {
+  it('comparison page links to all three vertical pages', () => {
+    const src = read('app/heavy-3pl-comparison/page.tsx');
+    for (const slug of SLUGS) expect(src).toContain(`/${slug}`);
+  });
+});
+
 describe('publish gate', () => {
   it('sitemap.ts does not list any vertical page', () => {
     const sitemap = read('app/sitemap.ts');
