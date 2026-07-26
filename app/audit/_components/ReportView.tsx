@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { captureEvent } from '@/lib/analytics';
 import type { AuditReport } from '@/app/api/audit/route';
 
 export type ReportState = {
@@ -46,6 +47,7 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
   const [gateEmail, setGateEmail] = useState('');
   const [gateSubmitting, setGateSubmitting] = useState(false);
   const [gateError, setGateError] = useState('');
+  const [emailFailed, setEmailFailed] = useState(false);
 
   async function handleGateSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,12 +58,19 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
     setGateSubmitting(true);
     setGateError('');
     try {
-      await fetch('/api/audit/unlock', {
+      const res = await fetch('/api/audit/unlock', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         // No annual_savings sent: the unlock email must not quote a savings figure.
         body: JSON.stringify({email: gateEmail, audit_id: auditId}),
       });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setGateError(json.error || 'Something went wrong. Try again.');
+        return;
+      }
+      captureEvent('audit_unlock_submitted');
+      setEmailFailed(json.email_sent === false);
       setUnlocked(true);
     } catch {
       setGateError('Something went wrong. Try again.');
@@ -130,6 +139,34 @@ export function ReportView({state, defaultUnlocked = false}: {state: ReportState
         )}
 
         {unlocked && <>
+          {emailFailed && (
+            <div style={{background: '#FEF3C7', border: '2px solid #D97706', color: '#78350F', padding: '1rem', borderRadius: '6px', marginBottom: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap'}}>
+              <span>We couldn&apos;t send your email copy — the report below is still yours.</span>
+              <button
+                className="btn"
+                disabled={gateSubmitting}
+                onClick={async () => {
+                  setGateSubmitting(true);
+                  try {
+                    const res = await fetch('/api/audit/unlock', {
+                      method: 'POST',
+                      headers: {'Content-Type': 'application/json'},
+                      body: JSON.stringify({email: gateEmail, audit_id: auditId}),
+                    });
+                    const json = await res.json().catch(() => ({}));
+                    if (res.ok && json.email_sent !== false) setEmailFailed(false);
+                  } catch {
+                    // stays failed; banner remains
+                  } finally {
+                    setGateSubmitting(false);
+                  }
+                }}
+                style={{padding: '0.5rem 1rem', whiteSpace: 'nowrap'}}
+              >
+                {gateSubmitting ? '...' : 'Resend email'}
+              </button>
+            </div>
+          )}
           <Section title="Zone Distribution Impact">
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '2rem'}}>
               <ZoneChart label="Your Current Zones" distribution={report.current_zone_percentages} />
