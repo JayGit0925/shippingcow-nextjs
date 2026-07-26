@@ -69,11 +69,6 @@ export type Testimonial = {
   metricLabel?: string;
 };
 
-export type FAQItem = {
-  question: string;
-  answer: string;
-};
-
 // --- Inquiry / Lead ----------------------------------------------
 
 export type InquiryPayload = {
