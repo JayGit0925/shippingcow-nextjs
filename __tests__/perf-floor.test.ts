@@ -46,3 +46,28 @@ describe('evaluateFloor', () => {
     expect(out.pass).toBe(true);
   });
 });
+
+describe('runner wiring (static)', () => {
+  const runner = () =>
+    readFileSync(join(__dirname, '..', 'scripts', 'lighthouse-floor.mjs'), 'utf8');
+  const pkg = () =>
+    JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
+
+  it('imports the shared evaluation module', () => {
+    expect(runner()).toMatch(/from '\.\/lighthouse-floor-lib\.mjs'/);
+  });
+
+  it('measures performance only, on lighthouse mobile defaults', () => {
+    expect(runner()).toContain('--only-categories=performance');
+    // No desktop override anywhere — mobile is the lighthouse default.
+    expect(runner()).not.toMatch(/desktop/i);
+  });
+
+  it('honors CHROME_PATH', () => {
+    expect(runner()).toContain('CHROME_PATH');
+  });
+
+  it('is wired as npm run perf:floor', () => {
+    expect(pkg().scripts['perf:floor']).toBe('node scripts/lighthouse-floor.mjs');
+  });
+});
