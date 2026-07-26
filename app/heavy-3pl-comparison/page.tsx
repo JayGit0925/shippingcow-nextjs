@@ -274,6 +274,24 @@ export default function Heavy3plComparisonPage() {
         </div>
       </section>
 
+      {/* ===== VERTICAL LANDING LINKS (PRD D-1) ===== */}
+      <section style={{ ...sectionStyle, paddingTop: 0 }}>
+        <p style={{ color: '#64748B', fontSize: 15 }}>
+          More on heavy-goods fulfillment:{' '}
+          <Link href="/heavy-goods-fulfillment" style={{ color: '#0052C9', fontWeight: 600 }}>
+            Heavy goods fulfillment
+          </Link>
+          <span style={{ color: '#94A3B8', margin: '0 8px' }}>·</span>
+          <Link href="/furniture-fulfillment" style={{ color: '#0052C9', fontWeight: 600 }}>
+            Furniture fulfillment
+          </Link>
+          <span style={{ color: '#94A3B8', margin: '0 8px' }}>·</span>
+          <Link href="/fitness-equipment-fulfillment" style={{ color: '#0052C9', fontWeight: 600 }}>
+            Fitness equipment fulfillment
+          </Link>
+        </p>
+      </section>
+
       {/* ===== CLOSING CTA ===== */}
       <section style={{ background: '#1A202C' }}>
         <div style={{ ...sectionStyle, textAlign: 'center' }}>
