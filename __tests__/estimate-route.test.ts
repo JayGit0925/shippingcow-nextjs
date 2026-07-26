@@ -23,9 +23,12 @@ vi.mock('@/lib/cost', () => ({
 const getCurrentUser = vi.fn();
 vi.mock('@/lib/auth', () => ({ getCurrentUser }));
 
-async function post() {
+const isRateLimited = vi.fn(() => false);
+vi.mock('@/lib/rate-limit', () => ({ isRateLimited }));
+
+async function postRaw() {
   const { POST } = await import('@/app/api/calculator/estimate/route');
-  const res = await POST(new Request('http://localhost/api/calculator/estimate', {
+  return POST(new Request('http://localhost/api/calculator/estimate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -33,7 +36,10 @@ async function post() {
       monthly_volume: 500, origin_zip: '08901', dest_zip: '90210',
     }),
   }));
-  return res.json();
+}
+
+async function post() {
+  return (await postRaw()).json();
 }
 
 describe('POST /api/calculator/estimate — payload by session state', () => {
@@ -86,5 +92,14 @@ describe('POST /api/calculator/estimate — payload by session state', () => {
     const json = await post();
     expect(json.sc_cost_per_pkg).toBeUndefined();
     expect(json.annual_savings).toBeUndefined();
+  });
+
+  it('returns 429 when the IP is rate-limited', async () => {
+    getCurrentUser.mockResolvedValue(null);
+    isRateLimited.mockReturnValueOnce(true);
+    const res = await postRaw();
+    expect(res.status).toBe(429);
+    const body = await res.json();
+    expect(body.error).toMatch(/too many/i);
   });
 });
